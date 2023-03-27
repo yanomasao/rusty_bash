@@ -4,6 +4,7 @@
 use glob::glob;
 use crate::env;
 use std::fs;
+use std::fs::File;
 use std::path::Path;
 use std::io::{BufRead, BufReader};
 use std::fs::OpenOptions;
@@ -159,6 +160,21 @@ pub fn blue_string(s: &String) -> String {
     format!("\x1b[34m{}\x1b[m", s)
 }
 
+pub fn search_users(head: &String) -> Vec<String> {
+    let mut ans = vec![];
+    if let Ok(f) = File::open("/etc/passwd"){
+        let reader = BufReader::new(f);
+        for line in reader.lines(){
+            let line = line.unwrap();
+            if line.starts_with(head) {
+                ans.push(line.split(":").nth(0).unwrap().to_string());
+            }
+        }
+    }
+    
+    ans
+}
+
 pub fn expand_tilde(given_path: &String) -> (String, String){
     if ! given_path.starts_with("~"){
         return (given_path.clone(), given_path.clone());
@@ -290,4 +306,10 @@ pub fn get_fullpath(com: &String) -> String {
     }
 
     "".to_string()
+}
+
+#[test]
+fn search_users_test() {
+    let users = search_users(&"roo".to_string());
+    assert_eq!(users[0], "root".to_string());
 }

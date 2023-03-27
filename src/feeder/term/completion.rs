@@ -186,4 +186,7 @@ pub fn show_command_candidates(writer: &mut Writer, core: &mut ShellCore) {
 fn file_candidates() {
     let comp_str = get_completion_str("/etc/passw".to_string());
     assert_eq!(comp_str, "d");
+
+    let comp_str = get_completion_str("~roo".to_string());
+    assert_eq!(comp_str, "t");
 }

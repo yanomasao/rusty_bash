@@ -3,12 +3,14 @@
 
 use crate::{ShellCore, Feeder, Script};
 use super::Command;
-use super::Pipe;
+use crate::elements::command;
+use super::{Pipe, Redirect};
 
 #[derive(Debug)]
 pub struct ParenCommand {
     pub text: String,
     pub script: Option<Script>,
+    pub redirects: Vec<Redirect>,
 }
 
 impl Command for ParenCommand {
@@ -27,6 +29,7 @@ impl ParenCommand {
         ParenCommand {
             text: String::new(),
             script: None,
+            redirects: vec![],
         }
     }
 
@@ -36,6 +39,9 @@ impl ParenCommand {
                 let mut ans = Self::new();
                 ans.text = "(".to_string() + &s.text.clone() + &feeder.consume(1);
                 ans.script = Some(s);
+
+                while command::eat_redirect(feeder, core, &mut ans.redirects) {}
+
                 Some(ans)
             },
             None => None, 

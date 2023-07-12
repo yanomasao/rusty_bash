@@ -12,6 +12,7 @@ use self::brace::BraceCommand;
 use std::fmt;
 use std::fmt::Debug;
 use super::Pipe;
+use super::io::redirect::Redirect;
 
 impl Debug for dyn Command {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
@@ -22,6 +23,10 @@ impl Debug for dyn Command {
 pub trait Command {
     fn exec(&mut self, core: &mut ShellCore, pipe: &mut Pipe);
     fn get_text(&self) -> String;
+}
+
+pub fn eat_redirect(feeder: &mut Feeder, core: &mut ShellCore, redirects: &mut Vec<Redirect>) -> bool {
+    false
 }
 
 pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<Box<dyn Command>> {

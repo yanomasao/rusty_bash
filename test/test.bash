@@ -200,6 +200,19 @@ res=$($com <<< '
 /tmp
 /tmp" ] || err $LINENO
 
+res=$($com <<< '
+	cd /etc/
+	cd /tmp
+	{ cd - ; } > /tmp/rusty_bash1
+	{ cd - ; echo aaa ;} > /tmp/rusty_bash2
+	cat /tmp/rusty_bash1
+	cat /tmp/rusty_bash2
+	pwd')
+[ "$res" = "/etc
+/tmp
+aaa
+/tmp" ] || err $LINENO
+
 #res=$($com <<< 'cat <' 2>&1)
 #[ "$?" == "2" ] || err $LINENO
 #[ "$res" == 'bash: syntax error near unexpected token: `newline'\''' ] || err $LINENO

@@ -21,11 +21,16 @@ fn replace(from: RawFd, to: RawFd) {
     close(from, &("Can't close fd: ".to_owned() + &from.to_string()))
 }
 
-fn share(from: RawFd, to: RawFd) {
+fn share(from: RawFd, to: RawFd) -> bool {
     if from < 0 || to < 0 {
-        return;
+        return false;
     }
-    unistd::dup2(from, to).expect("Can't copy file descriptors");
+
+    if let Ok(_) = unistd::dup2(from, to) {
+        true
+    }else{
+        false
+    }
 }
 
 fn backup(from: RawFd) -> RawFd {

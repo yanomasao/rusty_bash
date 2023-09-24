@@ -20,9 +20,10 @@ pub struct Redirect {
 impl Redirect {
     pub fn connect(&mut self, restore: bool) -> bool {
         let result = match self.symbol.as_str() {
-            "<" => self.redirect_simple_input(restore),
-            ">" => self.redirect_simple_output(restore),
-            ">>" => self.redirect_append(restore),
+            "<" => self.redirect_simple_input_file(restore),
+            ">" => self.redirect_simple_output_file(restore),
+            ">&" => self.redirect_simple_output_fd(restore),
+            ">>" => self.redirect_append_file(restore),
             _ => panic!("SUSH INTERNAL ERROR (Unknown redirect symbol)"),
         };
 
@@ -45,7 +46,7 @@ impl Redirect {
         }
     }
 
-    fn redirect_simple_input(&mut self, restore: bool) -> bool {
+    fn redirect_simple_input_file(&mut self, restore: bool) -> bool {
         self.set_left_fd(0, restore);
         if let Ok(fd) = File::open(&self.right) {
             io::replace(fd.into_raw_fd(), self.left_fd);
@@ -55,7 +56,7 @@ impl Redirect {
         }
     }
 
-    fn redirect_simple_output(&mut self, restore: bool) -> bool {
+    fn redirect_simple_output_file(&mut self, restore: bool) -> bool {
         self.set_left_fd(1, restore);
         if let Ok(fd) = File::create(&self.right) {
             io::replace(fd.into_raw_fd(), self.left_fd);
@@ -65,7 +66,13 @@ impl Redirect {
         }
     }
 
-    fn redirect_append(&mut self, restore: bool) -> bool {
+    fn redirect_simple_output_fd(&mut self, restore: bool) -> bool {
+        self.set_left_fd(1, restore);
+        let right_fd = self.right.parse().unwrap();
+        io::share(right_fd, self.left_fd)
+    }
+
+    fn redirect_append_file(&mut self, restore: bool) -> bool {
         self.set_left_fd(1, restore);
         if let Ok(fd) = OpenOptions::new().create(true).write(true)
                         .append(true).open(&self.right) {

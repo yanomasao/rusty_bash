@@ -62,6 +62,9 @@ impl Feeder {
         self.scanner_chars(" \t\n", core)
     }
 
+    pub fn scanner_nonnegative_integer(&mut self, core: &mut ShellCore) -> usize {
+        self.scanner_chars("0123456789", core)
+    }
     pub fn scanner_job_end(&mut self) -> usize {
         if let Some(ch) = self.remaining.chars().nth(0) {
             if let Some(_) = ";&\n".find(ch) {
@@ -102,17 +105,19 @@ impl Feeder {
     }
 
     pub fn scanner_redirect_symbol(&mut self, core: &mut ShellCore) -> usize {
-        if self.remaining.starts_with(">\\\n"){ // >\ で行が終わっていたら
-            if self.feed_and_connect(core){     // 次の行を読み込み
-                return self.scanner_redirect_symbol(core); // 自身を再度呼び出し
+        if self.remaining.starts_with(">\\\n") ||  self.remaining.starts_with("<\\\n") {
+            if self.feed_and_connect(core){
+                return self.scanner_redirect_symbol(core);
             }else{
                 return 1;
             }
         }
 
-        if self.remaining.starts_with(">>")    { 2 } //追加
-        else if self.remaining.starts_with("<"){ 1 } //else追加
-        else if self.remaining.starts_with(">"){ 1 }
+        if self.remaining.starts_with(">&")     { 2 }
+        else if self.remaining.starts_with("<&"){ 2 }
+        else if self.remaining.starts_with(">>"){ 2 }
+        else if self.remaining.starts_with("<") { 1 }
+        else if self.remaining.starts_with(">") { 1 }
         else{ 0 }
     }
 }

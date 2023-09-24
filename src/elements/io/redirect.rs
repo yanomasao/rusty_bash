@@ -12,6 +12,7 @@ pub struct Redirect {
     pub text: String,
     pub symbol: String,
     pub right: String,
+    pub left: String,
     left_fd: RawFd,
     left_backup: RawFd,
 }
@@ -32,13 +33,22 @@ impl Redirect {
         result
     }
 
-    fn redirect_simple_input(&mut self, restore: bool) -> bool {
+    fn set_left_fd(&mut self, default_fd: RawFd, restore: bool) {
+        self.left_fd = if self.left.len() == 0 {
+            default_fd
+        }else{
+            self.left.parse().unwrap()
+        };
+
         if restore {
-            self.left_fd = 0;
-            self.left_backup = io::backup(0);
+            self.left_backup = io::backup(self.left_fd);
         }
+    }
+
+    fn redirect_simple_input(&mut self, restore: bool) -> bool {
+        self.set_left_fd(0, restore);
         if let Ok(fd) = File::open(&self.right) {
-            io::replace(fd.into_raw_fd(), 0);
+            io::replace(fd.into_raw_fd(), self.left_fd);
             true
         }else{
             false
@@ -46,12 +56,9 @@ impl Redirect {
     }
 
     fn redirect_simple_output(&mut self, restore: bool) -> bool {
-        if restore {
-            self.left_fd = 1;
-            self.left_backup = io::backup(1);
-        }
+        self.set_left_fd(1, restore);
         if let Ok(fd) = File::create(&self.right) {
-            io::replace(fd.into_raw_fd(), 1);
+            io::replace(fd.into_raw_fd(), self.left_fd);
             true
         }else{
             false
@@ -59,13 +66,10 @@ impl Redirect {
     }
 
     fn redirect_append(&mut self, restore: bool) -> bool {
-        if restore {
-            self.left_fd = 1;
-            self.left_backup = io::backup(1);
-        }
+        self.set_left_fd(1, restore);
         if let Ok(fd) = OpenOptions::new().create(true).write(true)
                         .append(true).open(&self.right) {
-            io::replace(fd.into_raw_fd(), 1);
+            io::replace(fd.into_raw_fd(), self.left_fd);
             true
         }else{
             false
@@ -83,6 +87,7 @@ impl Redirect {
             text: String::new(),
             symbol: String::new(),
             right: String::new(),
+            left: String::new(),
             left_fd: -1,
             left_backup: -1,
         }
@@ -105,13 +110,23 @@ impl Redirect {
         len != 0
     }
 
+    fn eat_left(feeder: &mut Feeder, ans: &mut Self, core: &mut ShellCore) {
+        let len = feeder.scanner_nonnegative_integer(core);
+        ans.left = feeder.consume(len);
+        ans.text += &ans.left.clone();
+    }
+
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<Redirect> {
         let mut ans = Self::new();
+        let backup = feeder.clone();
+
+        Self::eat_left(feeder, &mut ans, core);
 
         if Self::eat_symbol(feeder, &mut ans, core) &&
            Self::eat_right(feeder, &mut ans, core) {
             Some(ans)
         }else{
+            feeder.rewind(backup);
             None
         }
     }

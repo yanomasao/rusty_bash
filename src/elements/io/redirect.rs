@@ -6,6 +6,7 @@ use std::os::fd::{IntoRawFd, RawFd};
 use std::io::Error;
 use crate::elements::io;
 use crate::{Feeder, ShellCore};
+use nix::errno::Errno;
 
 #[derive(Debug)]
 pub struct Redirect {
@@ -19,26 +20,30 @@ pub struct Redirect {
 
 impl Redirect {
     pub fn connect(&mut self, restore: bool) -> bool {
-        let result = match self.symbol.as_str() {
+        match self.symbol.as_str() {
             "<" => self.redirect_simple_input_file(restore),
             ">" => self.redirect_simple_output_file(restore),
             ">&" => self.redirect_simple_output_fd(restore),
             ">>" => self.redirect_append_file(restore),
             _ => panic!("SUSH INTERNAL ERROR (Unknown redirect symbol)"),
-        };
-
-        if ! result {
-            eprintln!("bash: {}: {}", &self.right, Error::last_os_error().kind());
         }
-
-        result
+         //       eprintln!("sush: {}: {}", &self.right, Error::from_raw_os_error(errno as i32).kind());
+                          //Error::last_os_error().kind());
+                          /*
+                false
+            },
+        }
+        */
     }
 
     fn set_left_fd(&mut self, default_fd: RawFd, restore: bool) {
         self.left_fd = if self.left.len() == 0 {
             default_fd
         }else{
-            self.left.parse().unwrap()
+            match self.left.parse() {
+                Ok(n) => n,
+                Err(_) => -1, 
+            }
         };
 
         if restore {

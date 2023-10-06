@@ -6,6 +6,8 @@ pub mod redirect;
 
 use std::os::unix::prelude::RawFd;
 use nix::{fcntl, unistd};
+use std::io::Error;
+use nix::errno::Errno;
 
 fn close(fd: RawFd, err_str: &str){
     if fd >= 0 {
@@ -26,14 +28,20 @@ fn share(from: RawFd, to: RawFd) -> bool {
         return false;
     }
 
-    if let Ok(_) = unistd::dup2(from, to) {
-        true
-    }else{
-        false
+    match unistd::dup2(from, to) {
+        Ok(_) => true,
+        Err(Errno::EBADF) => {
+            eprintln!("sush: {}: Bad file descriptor", from);
+            false
+        },
+        Err(_) => {
+            eprintln!("sush: dup2 Unknown error");
+            false
+        },
     }
 }
 
 fn backup(from: RawFd) -> RawFd {
     fcntl::fcntl(from, fcntl::F_DUPFD_CLOEXEC(10))
-           .expect("Can't allocate fd for backup")
+           .expect("sush: Can't allocate fd for backup")
 }

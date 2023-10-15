@@ -18,6 +18,7 @@ enum Status{
 #[derive(Debug)]
 pub struct Script {
     pub jobs: Vec<Job>,
+    pub job_ends: Vec<String>,
     pub text: String,
 }
 
@@ -57,7 +58,8 @@ impl Script {
     pub fn new() -> Script {
         Script {
             text: String::new(),
-            jobs: vec![]
+            jobs: vec![],
+            job_ends: vec![],
         }
     }
 
@@ -74,7 +76,9 @@ impl Script {
     fn eat_job_end(feeder: &mut Feeder, ans: &mut Script) -> bool {
         let len = feeder.scanner_job_end();
         if len > 0 {
-            ans.text += &feeder.consume(len);
+            let end = feeder.consume(len);
+            ans.job_ends.push(end.clone());
+            ans.text += &end.clone();
             true
         }else{
             false

@@ -5,11 +5,10 @@ may be a clone of Bash.
 ![](https://img.shields.io/github/actions/workflow/status/shellgei/rusty_bash/test.yml)
 ![](https://img.shields.io/github/license/shellgei/rusty_bash)
 
-## author / maintainer
+## branches
 
-<img width="20%" src="https://b.ueda.tech/pages/top/ku_the_cat.jpg" />
-
-* [message from the author](https://www.youtube.com/shorts/YXJHb-hIbxU)
+* main: this branch
+* sdyyyymm or sd/yyyymm: codes for articles on SoftwareDesign
 
 ## how to try it
 
@@ -22,7 +21,7 @@ $ ./target/release/rusty_bash
 
 Rusty Bash reads `.rusty_bashrc` in your home directory if it exists. 
 
-## list of features
+## list of features (main branch)
 
 * :heavy_check_mark: :available
 * :construction: :partially available (or having known bugs) 

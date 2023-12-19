@@ -100,22 +100,19 @@ impl IfCommand {
                 return None;
             }
 
-            if feeder.starts_with("fi") {
+            Self::eat_script("else", feeder, &mut ans, core);
+
+            if feeder.starts_with("fi") { // then ... fi
                 ans.text.push_str(&feeder.consume(2));
                 break;
-            }else if feeder.starts_with("else") {
-                if ! Self::eat_script("else", feeder, &mut ans, core) {
-                    return None;
-                }
-                ans.text.push_str(&feeder.consume(2)); //fi
-                break;
-            }else if feeder.starts_with("elif") {
-                if ! Self::eat_script("elif", feeder, &mut ans, core) {
-                    return None;
-                }
-            }else{
-                panic!("SUSH INTERNAL ERROR (parse error on if command)");
             }
+
+            if feeder.starts_with("elif")  // then ... elif ... then ...
+            && Self::eat_script("elif", feeder, &mut ans, core) {
+                continue;
+            }
+
+            return None;
         }
 
         loop {

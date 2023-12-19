@@ -27,12 +27,10 @@ impl Command for IfCommand {
     }
 
     fn run_command(&mut self, core: &mut ShellCore, _: bool) {
-        for (if_script, then_script) in self.if_elif_scripts
-                                            .iter_mut()
-                                            .zip(self.then_scripts.iter_mut()) {
-            if_script.exec(core);
+        for i in 0..self.if_elif_scripts.len() {
+            self.if_elif_scripts[i].exec(core);
             if core.vars["?"] == "0" {
-                then_script.exec(core);
+                self.then_scripts[i].exec(core);
                 return;
             }
         }

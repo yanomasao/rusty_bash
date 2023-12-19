@@ -53,7 +53,7 @@ impl IfCommand {
 
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<IfCommand> {
         let mut ans = Self::new();
-        let mut if_script = Some(Script::new());
+        let mut if_script = None;
         if command::eat_inner_script(feeder, core, "if", vec!["then"], &mut if_script) {
             ans.text.push_str("if");
             ans.text.push_str(&if_script.as_mut().unwrap().get_text());
@@ -62,7 +62,7 @@ impl IfCommand {
             return None;
         }
 
-        let mut then_script = Some(Script::new());
+        let mut then_script = None;
         if command::eat_inner_script(feeder, core, "then", vec!["fi"],  &mut then_script) {
             ans.text.push_str("then");
             ans.text.push_str(&then_script.as_mut().unwrap().get_text());

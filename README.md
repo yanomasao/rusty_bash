@@ -1,5 +1,7 @@
 # Rusty Bash (old version)
 
+* [current main branch](https://github.com/shellgei/rusty_bash)
+
 may be a clone of Bash. 
 
 ![](https://img.shields.io/github/actions/workflow/status/shellgei/rusty_bash/test.yml)

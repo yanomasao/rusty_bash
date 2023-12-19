@@ -342,6 +342,9 @@ aa" ] || err $LINENO
 res=$($com <<< 'if [ "a" == "b" ] ; then echo aa; elif [ "b" == "c" ] ; then echo bb; else echo cc; fi')
 [ "$res" = "cc" ] || err $LINENO
 
+res=$($com <<< 'if [ "a" == "b" ] ; then echo aa; elif [ "b" == "c" ] ; then echo bb; elif [ "c" = "c" ] ; then echo cc ; else echo dd; fi')
+[ "$res" = "cc" ] || err $LINENO
+
 res=$($com <<< 'if [ "a" == "a" ] ; then echo aa; elif [ "b" == "c" ] ; then echo bb; else echo cc; fi')
 [ "$res" = "aa" ] || err $LINENO
 

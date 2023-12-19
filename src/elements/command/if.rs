@@ -60,23 +60,25 @@ impl IfCommand {
         }
     }
 
-    fn eat_script(word: &str, feeder: &mut Feeder, ans: &mut IfCommand, core: &mut ShellCore) -> bool {
-        let mut script = None;
-        let end_words = match word {
+    fn end_words(word: &str) -> Vec<&str> {
+        match word {
             "if" | "elif" => vec!["then"],
             "then" => vec!["fi", "else", "elif"],
-            "else" => vec!["fi" ],
+            "else" => vec!["fi"],
             _ => panic!("SUSH INTERNAL ERROR (if parse error)"),
-        };
+        }
+    }
 
-        if command::eat_inner_script(feeder, core, word, end_words, &mut script) {
+    fn eat_script(word: &str, feeder: &mut Feeder, ans: &mut IfCommand, core: &mut ShellCore) -> bool {
+        let mut s = None;
+        if command::eat_inner_script(feeder, core, word, Self::end_words(word), &mut s) {
             ans.text.push_str(word);
-            ans.text.push_str(&script.as_mut().unwrap().get_text());
+            ans.text.push_str(&s.as_mut().unwrap().get_text());
 
             match word {
-                "if" | "elif" => ans.if_elif_scripts.push(script.unwrap()),
-                "then" => ans.then_scripts.push(script.unwrap()),
-                "else" => ans.else_script = script,
+                "if" | "elif" => ans.if_elif_scripts.push(s.unwrap()),
+                "then"        => ans.then_scripts.push(s.unwrap()),
+                "else"        => ans.else_script = s,
                 _ => panic!("SUSH INTERNAL ERROR (if parse error)"),
             };
 

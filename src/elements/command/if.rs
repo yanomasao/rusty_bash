@@ -37,7 +37,10 @@ impl Command for IfCommand {
             }
         }
 
-        self.else_script.as_mut().expect("SUSH INTERNAL ERROR (no else script)").exec(core);
+        match self.else_script.as_mut() {
+            Some(s) => s.exec(core),
+            _ => {},
+        }
     }
 
     fn get_text(&self) -> String { self.text.clone() }
@@ -90,6 +93,17 @@ impl IfCommand {
                 }
                 ans.text.push_str(&feeder.consume(2));
                 break;
+            }else if feeder.starts_with("elif") {
+                let mut if_script = None;
+                if command::eat_inner_script(feeder, core, "elif", vec!["then"], &mut if_script) {
+                    ans.text.push_str("if");
+                    ans.text.push_str(&if_script.as_mut().unwrap().get_text());
+                    ans.if_elif_scripts.push(if_script.unwrap());
+                }else{
+                    return None;
+                }
+            }else{
+                panic!("SUSH INTERNAL ERROR (parse error on if command)");
             }
         }
 

@@ -57,11 +57,14 @@ impl IfCommand {
 
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<IfCommand> {
         let mut ans = Self::new();
-            dbg!("{:?}", &ans);
-        if command::eat_inner_script(feeder, core, "if", vec!["then"], &mut ans.if_script)
-        && command::eat_inner_script(feeder, core, "then", vec!["fi"],  &mut ans.then_script) {
+        if command::eat_inner_script(feeder, core, "if", vec!["then"], &mut ans.if_script) {
             ans.text.push_str("if");
             ans.text.push_str(&ans.if_script.as_mut().unwrap().get_text());
+        }else{
+            return None;
+        }
+
+        if command::eat_inner_script(feeder, core, "then", vec!["fi"],  &mut ans.then_script) {
             ans.text.push_str("then");
             ans.text.push_str(&ans.then_script.as_mut().unwrap().get_text());
             ans.text.push_str(&feeder.consume(2)); //fi
@@ -72,7 +75,6 @@ impl IfCommand {
                     break;
                 }
             }
-            dbg!("{:?}", &ans);
             Some(ans)
         }else{
             None

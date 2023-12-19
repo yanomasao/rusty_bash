@@ -100,14 +100,14 @@ impl IfCommand {
                 return None;
             }
 
-            Self::eat_script("else", feeder, &mut ans, core);
+            Self::eat_script("else", feeder, &mut ans, core); //optional
 
-            if feeder.starts_with("fi") { // then ... fi
+            if feeder.starts_with("fi") { // If "else" exists, always it comes here.
                 ans.text.push_str(&feeder.consume(2));
                 break;
             }
 
-            if feeder.starts_with("elif")  // then ... elif ... then ...
+            if feeder.starts_with("elif")
             && Self::eat_script("elif", feeder, &mut ans, core) {
                 continue;
             }

@@ -62,6 +62,15 @@ impl IfCommand {
             return None;
         }
 
+        /*
+        loop {
+            let mut then_script = None;
+            if command::eat_inner_script(feeder, core, "then", vec!["elif"], &mut if_script) {
+
+            }else if command::eat_inner_script(feeder, core, "then", vec!["fi"], &mut if_script) {
+            }
+        }*/
+
         let mut then_script = None;
         if command::eat_inner_script(feeder, core, "then", vec!["fi"],  &mut then_script) {
             ans.text.push_str("then");
@@ -69,15 +78,16 @@ impl IfCommand {
             ans.text.push_str(&feeder.consume(2)); //fi
             ans.then_scripts.push(then_script.unwrap());
 
-            loop {
-                command::eat_blank_with_comment(feeder, core, &mut ans.text);
-                if ! command::eat_redirect(feeder, core, &mut ans.redirects, &mut ans.text){
-                    break;
-                }
-            }
-            Some(ans)
         }else{
-            None
+            return None;
         }
+
+        loop {
+            command::eat_blank_with_comment(feeder, core, &mut ans.text);
+            if ! command::eat_redirect(feeder, core, &mut ans.redirects, &mut ans.text){
+                break;
+            }
+        }
+        Some(ans)
     }
 }

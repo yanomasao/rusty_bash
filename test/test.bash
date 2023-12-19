@@ -321,4 +321,9 @@ res=$($com <<< 'touch /tmp/rusty_bash ; while [ -f /tmp/rusty_bash ] ; do echo w
 res=$($com <<< 'rm -f /tmp/rusty_bash ; while [ -f /tmp/rusty_bash ] ; do echo wait ; rm /tmp/rusty_bash ; done')
 [ "$res" == "" ] || err $LINENO
 
+### IF TEST ###
+
+res=$($com <<< 'if [ "a" == "a" ] ; then echo aa; fi')
+[ "$res" = "aa" ] || err $LINENO
+
 echo OK $0

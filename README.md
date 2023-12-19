@@ -6,7 +6,7 @@
 
 * [old main branch](https://github.com/shellgei/rusty_bash/tree/old_main)
 
-[![Rust](https://github.com/shellgei/rusty_bash/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/shellgei/rusty_bash/actions/workflows/test.yml)
+[![Rust](https://github.com/shellgei/rusty_bash/actions/workflows/test.yml/badge.svg?branch=dev-compounds)](https://github.com/shellgei/rusty_bash/actions/workflows/test.yml)
 ![](https://img.shields.io/github/license/shellgei/rusty_bash)
 
 ## What's this?

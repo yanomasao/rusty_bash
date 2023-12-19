@@ -18,7 +18,7 @@ $ ./target/release/rusty_bash
 
 Rusty Bash reads `.rusty_bashrc` in your home directory if it exists. 
 
-## list of features (main branch)
+## list of features
 
 * :heavy_check_mark: :available
 * :construction: :partially available (or having known bugs) 

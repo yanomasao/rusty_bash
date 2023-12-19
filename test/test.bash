@@ -326,6 +326,9 @@ res=$($com <<< 'rm -f /tmp/rusty_bash ; while [ -f /tmp/rusty_bash ] ; do echo w
 res=$($com <<< 'if [ "a" == "a" ] ; then echo aa; fi')
 [ "$res" = "aa" ] || err $LINENO
 
+res=$($com <<< 'if [ "a" == "b" ] ; then echo aa; else echo bb; fi')
+[ "$res" = "bb" ] || err $LINENO
+
 res=$($com <<< 'echo file > /tmp/rusty_bash; if [ "a" == "a" ] ; then echo aa; fi >> /tmp/rusty_bash; cat /tmp/rusty_bash')
 [ "$res" = "file
 aa" ] || err $LINENO

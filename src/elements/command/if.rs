@@ -60,24 +60,41 @@ impl IfCommand {
         }
     }
 
+    fn eat_script(word: &str, feeder: &mut Feeder, ans: &mut IfCommand, core: &mut ShellCore) -> bool {
+        let mut script = None;
+        let end_words = match word {
+            "if" | "elif" => vec!["then"],
+            "then" => vec!["fi", "else", "elif"],
+            "else" => vec!["fi" ],
+            _ => panic!("SUSH INTERNAL ERROR (if parse error)"),
+        };
+
+        if command::eat_inner_script(feeder, core, word, end_words, &mut script) {
+            ans.text.push_str(word);
+            ans.text.push_str(&script.as_mut().unwrap().get_text());
+
+            match word {
+                "if" | "elif" => ans.if_elif_scripts.push(script.unwrap()),
+                "then" => ans.then_scripts.push(script.unwrap()),
+                "else" => ans.else_script = script,
+                _ => panic!("SUSH INTERNAL ERROR (if parse error)"),
+            };
+
+            true
+        }else{
+            false
+        }
+    }
+
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<IfCommand> {
         let mut ans = Self::new();
-        let mut if_script = None;
-        if command::eat_inner_script(feeder, core, "if", vec!["then"], &mut if_script) {
-            ans.text.push_str("if");
-            ans.text.push_str(&if_script.as_mut().unwrap().get_text());
-            ans.if_elif_scripts.push(if_script.unwrap());
-        }else{
+
+        if ! Self::eat_script("if", feeder, &mut ans, core) {
             return None;
         }
 
         loop {
-            let mut then_script = None;
-            if command::eat_inner_script(feeder, core, "then", vec!["fi", "else", "elif"],  &mut then_script) {
-                ans.text.push_str("then");
-                ans.text.push_str(&then_script.as_mut().unwrap().get_text());
-                ans.then_scripts.push(then_script.unwrap());
-            }else{
+            if ! Self::eat_script("then", feeder, &mut ans, core) {
                 return None;
             }
 
@@ -85,21 +102,13 @@ impl IfCommand {
                 ans.text.push_str(&feeder.consume(2));
                 break;
             }else if feeder.starts_with("else") {
-                if command::eat_inner_script(feeder, core, "else", vec!["fi"], &mut ans.else_script) {
-                    ans.text.push_str("else");
-                    ans.text.push_str(&ans.else_script.as_mut().unwrap().get_text());
-                }else{
+                if ! Self::eat_script("else", feeder, &mut ans, core) {
                     return None;
                 }
-                ans.text.push_str(&feeder.consume(2));
+                ans.text.push_str(&feeder.consume(2)); //fi
                 break;
             }else if feeder.starts_with("elif") {
-                let mut if_script = None;
-                if command::eat_inner_script(feeder, core, "elif", vec!["then"], &mut if_script) {
-                    ans.text.push_str("if");
-                    ans.text.push_str(&if_script.as_mut().unwrap().get_text());
-                    ans.if_elif_scripts.push(if_script.unwrap());
-                }else{
+                if ! Self::eat_script("elif", feeder, &mut ans, core) {
                     return None;
                 }
             }else{

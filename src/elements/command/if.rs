@@ -9,8 +9,8 @@ use nix::unistd::Pid;
 #[derive(Debug)]
 pub struct IfCommand {
     pub text: String,
-    pub while_script: Option<Script>,
-    pub do_script: Option<Script>,
+    pub if_script: Option<Script>,
+    pub then_script: Option<Script>,
     pub redirects: Vec<Redirect>,
     force_fork: bool,
 }
@@ -26,19 +26,17 @@ impl Command for IfCommand {
     }
 
     fn run_command(&mut self, core: &mut ShellCore, _: bool) {
-        loop {
-            self.while_script.as_mut()
-                .expect("SUSH INTERNAL ERROR (no script)")
-                .exec(core);
+        self.if_script.as_mut()
+            .expect("SUSH INTERNAL ERROR (no script)")
+            .exec(core);
 
-            if core.vars["?"] != "0" {
-                break;
-            }
-
-            self.do_script.as_mut()
-                .expect("SUSH INTERNAL ERROR (no script)")
-                .exec(core);
+        if core.vars["?"] != "0" {
+            return;
         }
+
+        self.then_script.as_mut()
+            .expect("SUSH INTERNAL ERROR (no script)")
+            .exec(core);
     }
 
     fn get_text(&self) -> String { self.text.clone() }
@@ -50,8 +48,8 @@ impl IfCommand {
     fn new() -> IfCommand {
         IfCommand {
             text: String::new(),
-            while_script: None,
-            do_script: None,
+            if_script: None,
+            then_script: None,
             redirects: vec![],
             force_fork: false,
         }
@@ -59,13 +57,14 @@ impl IfCommand {
 
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<IfCommand> {
         let mut ans = Self::new();
-        if command::eat_inner_script(feeder, core, "while", vec!["do"], &mut ans.while_script)
-        && command::eat_inner_script(feeder, core, "do", vec!["done"],  &mut ans.do_script) {
-            ans.text.push_str("while");
-            ans.text.push_str(&ans.while_script.as_mut().unwrap().get_text());
-            ans.text.push_str("do");
-            ans.text.push_str(&ans.do_script.as_mut().unwrap().get_text());
-            ans.text.push_str(&feeder.consume(4)); //done
+            dbg!("{:?}", &ans);
+        if command::eat_inner_script(feeder, core, "if", vec!["then"], &mut ans.if_script)
+        && command::eat_inner_script(feeder, core, "then", vec!["fi"],  &mut ans.then_script) {
+            ans.text.push_str("if");
+            ans.text.push_str(&ans.if_script.as_mut().unwrap().get_text());
+            ans.text.push_str("then");
+            ans.text.push_str(&ans.then_script.as_mut().unwrap().get_text());
+            ans.text.push_str(&feeder.consume(2)); //fi
 
             loop {
                 command::eat_blank_with_comment(feeder, core, &mut ans.text);
@@ -73,7 +72,7 @@ impl IfCommand {
                     break;
                 }
             }
-            //dbg!("{:?}", &ans);
+            dbg!("{:?}", &ans);
             Some(ans)
         }else{
             None

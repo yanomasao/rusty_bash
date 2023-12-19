@@ -62,24 +62,21 @@ impl IfCommand {
             return None;
         }
 
-        /*
         loop {
             let mut then_script = None;
-            if command::eat_inner_script(feeder, core, "then", vec!["elif"], &mut if_script) {
-
-            }else if command::eat_inner_script(feeder, core, "then", vec!["fi"], &mut if_script) {
+            if command::eat_inner_script(feeder, core, "then", vec!["fi", "else", "elif"],  &mut then_script) {
+                ans.text.push_str("then");
+                ans.text.push_str(&then_script.as_mut().unwrap().get_text());
+                ans.then_scripts.push(then_script.unwrap());
+            }else{
+                return None;
             }
-        }*/
 
-        let mut then_script = None;
-        if command::eat_inner_script(feeder, core, "then", vec!["fi"],  &mut then_script) {
-            ans.text.push_str("then");
-            ans.text.push_str(&then_script.as_mut().unwrap().get_text());
-            ans.text.push_str(&feeder.consume(2)); //fi
-            ans.then_scripts.push(then_script.unwrap());
+            if feeder.starts_with("fi") {
+                ans.text.push_str(&feeder.consume(2));
+                break;
+            }
 
-        }else{
-            return None;
         }
 
         loop {

@@ -1,14 +1,9 @@
-# Rusty Bash
+# Rusty Bash (old version)
 
 may be a clone of Bash. 
 
 ![](https://img.shields.io/github/actions/workflow/status/shellgei/rusty_bash/test.yml)
 ![](https://img.shields.io/github/license/shellgei/rusty_bash)
-
-## branches
-
-* main: this branch
-* sdyyyymm or sd/yyyymm: codes for articles on SoftwareDesign
 
 ## how to try it
 

@@ -91,11 +91,9 @@ impl IfCommand {
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<IfCommand> {
         let mut ans = Self::new();
 
-        if ! Self::eat_script("if", feeder, &mut ans, core) {
-            return None;
-        }
+        let mut if_or_elif = "if";
 
-        loop {
+        while Self::eat_script(if_or_elif, feeder, &mut ans, core) {
             if ! Self::eat_script("then", feeder, &mut ans, core) {
                 return None;
             }
@@ -107,11 +105,10 @@ impl IfCommand {
                 break;
             }
 
-            if feeder.starts_with("elif")
-            && Self::eat_script("elif", feeder, &mut ans, core) {
-                continue;
-            }
+            if_or_elif = "elif";
+        }
 
+        if ans.if_elif_scripts.len() == 0 {
             return None;
         }
 

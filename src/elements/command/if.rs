@@ -92,11 +92,8 @@ impl IfCommand {
         let mut ans = Self::new();
 
         let mut if_or_elif = "if";
-
-        while Self::eat_script(if_or_elif, feeder, &mut ans, core) {
-            if ! Self::eat_script("then", feeder, &mut ans, core) {
-                return None;
-            }
+        while Self::eat_script(if_or_elif, feeder, &mut ans, core) 
+           && Self::eat_script("then", feeder, &mut ans, core) {
 
             Self::eat_script("else", feeder, &mut ans, core); //optional
 
@@ -108,7 +105,7 @@ impl IfCommand {
             if_or_elif = "elif";
         }
 
-        if ans.if_elif_scripts.len() == 0 {
+        if ans.then_scripts.len() == 0 {
             return None;
         }
 

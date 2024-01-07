@@ -6,7 +6,7 @@ pub mod jobtable;
 
 use std::collections::HashMap;
 use std::os::fd::RawFd;
-use std::process;
+use std::{io, env, path, process};
 use nix::{fcntl, unistd};
 use nix::sys::{signal, wait};
 use nix::sys::signal::{Signal, SigHandler};
@@ -27,6 +27,7 @@ pub struct ShellCore {
     pub is_subshell: bool,
     pub tty_fd: RawFd,
     pub job_table: Vec<JobEntry>,
+    tcwd: Option<path::PathBuf>, // the_current_working_directory
 }
 
 fn is_interactive() -> bool {
@@ -58,18 +59,18 @@ impl ShellCore {
             is_subshell: false,
             tty_fd: -1,
             job_table: vec![],
+            tcwd: None,
         };
 
+        core.init_current_directory();
         core.set_initial_vars();
+        core.set_builtins();
 
         if is_interactive() {
             core.flags += "i";
             core.tty_fd = fcntl::fcntl(2, fcntl::F_DUPFD_CLOEXEC(255))
-                .expect("Can't allocate fd for tty FD");
+                .expect("sush(fatal): Can't allocate fd for tty FD");
         }
-
-        core.builtins.insert("cd".to_string(), builtins::cd);
-        core.builtins.insert("exit".to_string(), builtins::exit);
 
         core
     }
@@ -79,6 +80,7 @@ impl ShellCore {
         self.vars.insert("BASHPID".to_string(), self.vars["$"].clone());
         self.vars.insert("BASH_SUBSHELL".to_string(), "0".to_string());
         self.vars.insert("?".to_string(), "0".to_string());
+        self.vars.insert("HOME".to_string(), env::var("HOME").unwrap_or("/".to_string()));
     }
 
     pub fn has_flag(&self, flag: char) -> bool {
@@ -135,6 +137,10 @@ impl ShellCore {
     }
 
     pub fn run_builtin(&mut self, args: &mut Vec<String>) -> bool {
+        if args.len() == 0 {
+            panic!("SUSH INTERNAL ERROR (no arg for builtins)");
+        }
+
         if ! self.builtins.contains_key(&args[0]) {
             return false;
         }
@@ -180,5 +186,28 @@ impl ShellCore {
         self.set_pgid(pid, pgid);
         self.set_subshell_vars();
         self.job_table.clear();
+    }
+
+    pub fn init_current_directory(&mut self) {
+        match env::current_dir() {
+            Ok(path) => self.tcwd = Some(path),
+            Err(err) => eprintln!("pwd: error retrieving current directory: {:?}", err),
+        }
+    }
+
+    pub fn get_current_directory(&mut self) -> Option<path::PathBuf> {
+        if self.tcwd.is_none() {
+            self.init_current_directory();
+        }
+        self.tcwd.clone()
+    }
+
+
+    pub fn set_current_directory(&mut self, path: &path::PathBuf) -> Result<(), io::Error> {
+        let res = env::set_current_dir(path);
+        if res.is_ok() {
+            self.tcwd = Some(path.clone());
+        }
+        res
     }
 }

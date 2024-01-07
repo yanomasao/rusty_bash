@@ -1,13 +1,14 @@
 # Rusty Bash (a.k.a. sushi 🍣 shell)
 
+[![ubuntu-latest](https://github.com/shellgei/rusty_bash/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/shellgei/rusty_bash/actions/workflows/ubuntu.yml)
+[![macos-latest](https://github.com/shellgei/rusty_bash/actions/workflows/macos.yml/badge.svg)](https://github.com/shellgei/rusty_bash/actions/workflows/macos.yml)
+![](https://img.shields.io/github/license/shellgei/rusty_bash)
+
 
 **IMPORTANT: the main branch is switched to the shell develped for articles on [SoftwareDesign](https://gihyo.jp/magazine/SD).**
 （今までのメインブランチは、連載のものに比べて散らかりすぎなので、連載のものをmainに切り替えました。）
 
 * [old main branch](https://github.com/shellgei/rusty_bash/tree/old_main)
-
-[![Rust](https://github.com/shellgei/rusty_bash/actions/workflows/test.yml/badge.svg?branch=dev-compounds)](https://github.com/shellgei/rusty_bash/actions/workflows/test.yml)
-![](https://img.shields.io/github/license/shellgei/rusty_bash)
 
 ## What's this?
 
@@ -67,7 +68,7 @@ These dev-* branches will be merged to the main branch depending on the situatio
 |-------------------|----|-------------------|----|-------------------|----|
 | cd | :heavy_check_mark: | pwd | :heavy_check_mark: | read | :no_good: |
 | exit | :heavy_check_mark: | source | :no_good: | set | :no_good: | 
-| shopt | :no_good: | : | :no_good: | . | :no_good: | [ | :no_good: |
+| shopt | :no_good: | : | :heavy_check_mark: | . | :no_good: | [ | :no_good: |
 | alias | :no_good: | bg | :no_good: | bind | :no_good: |
 | break | :no_good: | builtin | :no_good: | caller | :no_good: |
 | command | :no_good: | compgen | :no_good: | complete | :no_good: |
@@ -81,10 +82,10 @@ These dev-* branches will be merged to the main branch depending on the situatio
 | popd | :no_good: | printf | :no_good: | pushd | :no_good: |
 | read | :no_good: | readonly | :no_good: | return | :no_good: |
 | shift | :no_good: | suspend | :no_good: | test | :no_good: |
-| times | :no_good: | trap | :no_good: | true | :no_good: |
+| times | :no_good: | trap | :no_good: | true | :heavy_check_mark: |
 | type | :no_good: | typeset | :no_good: | ulimit | :no_good: |
 | umask | :no_good: | unalias | :no_good: | unset | :no_good: |
-| wait | :no_good: | export | :no_good: | false | :no_good: |
+| wait | :no_good: | export | :no_good: | false | :heavy_check_mark: |
 
 ## Thanks to
 

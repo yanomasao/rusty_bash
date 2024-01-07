@@ -1,9 +1,23 @@
-//SPDX-FileCopyrightText: 2022 Ryuichi Ueda ryuichiueda@gmail.com
+//SPDX-FileCopyrightText: 2023 Ryuichi Ueda <ryuichiueda@gmail.com>
+//SPDX-FileCopyrightText: 2023 @caro@mi.shellgei.org
 //SPDX-License-Identifier: BSD-3-Clause
 
+mod cd;
+mod pwd;
+mod utils;
+
 use crate::ShellCore;
-use std::{env, fs};
-use std::path::Path;
+
+impl ShellCore {
+    pub fn set_builtins(&mut self) {
+        self.builtins.insert(":".to_string(), true_);
+        self.builtins.insert("cd".to_string(), cd::cd);
+        self.builtins.insert("exit".to_string(), exit);
+        self.builtins.insert("false".to_string(), false_);
+        self.builtins.insert("pwd".to_string(), pwd::pwd);
+        self.builtins.insert("true".to_string(), true_);
+    }
+}
 
 pub fn exit(core: &mut ShellCore, args: &mut Vec<String>) -> i32 {
     eprintln!("exit");
@@ -13,39 +27,10 @@ pub fn exit(core: &mut ShellCore, args: &mut Vec<String>) -> i32 {
     core.exit()
 }
 
-pub fn cd(core: &mut ShellCore, args: &mut Vec<String>) -> i32 {
-    if args.len() == 0 {
-        eprintln!("Bug of this shell");
-        return 1;
-    }
-    if args.len() > 2 {
-        eprintln!("{}", "bash: cd: too many arguments");
-        return 1;
-    }
+pub fn false_(_: &mut ShellCore, _: &mut Vec<String>) -> i32 {
+    1
+}
 
-
-    if args.len() == 1 { //only "cd"
-        let var = env::var("HOME").expect("HOME is not defined");
-        args.push(var);
-    }else if args.len() == 2 && args[1] == "-" { // cd -
-        if let Some(old) = core.vars.get("OLDPWD") {
-            println!("{}", &old);
-            args[1] = old.to_string();
-        }
-    };
-
-    if let Ok(old) = env::current_dir() {
-        core.vars.insert("OLDPWD".to_string(), old.display().to_string());
-    };
-
-    let path = Path::new(&args[1]);
-    if env::set_current_dir(&path).is_ok() {
-        if let Ok(full) = fs::canonicalize(path) {
-            core.vars.insert("PWD".to_string(), full.display().to_string());
-        }
-        0
-    }else{
-        eprintln!("Not exist directory");
-        1
-    }
+pub fn true_(_: &mut ShellCore, _: &mut Vec<String>) -> i32 {
+    0
 }

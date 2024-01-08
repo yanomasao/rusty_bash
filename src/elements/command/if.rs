@@ -69,21 +69,20 @@ impl IfCommand {
 
     fn eat_script(word: &str, feeder: &mut Feeder, ans: &mut IfCommand, core: &mut ShellCore) -> bool {
         let mut s = None;
-        if command::eat_inner_script(feeder, core, word, Self::end_words(word), &mut s) {
-            ans.text.push_str(word);
-            ans.text.push_str(&s.as_mut().unwrap().get_text());
-
-            match word {
-                "if" | "elif" => ans.if_elif_scripts.push(s.unwrap()),
-                "then"        => ans.then_scripts.push(s.unwrap()),
-                "else"        => ans.else_script = s,
-                _ => panic!("SUSH INTERNAL ERROR (if parse error)"),
-            };
-
-            true
-        }else{
-            false
+        if ! command::eat_inner_script(feeder, core, word, Self::end_words(word), &mut s) {
+            return false;
         }
+
+        ans.text.push_str(word);
+        ans.text.push_str(&s.as_mut().unwrap().get_text());
+
+        match word {
+            "if" | "elif" => ans.if_elif_scripts.push(s.unwrap()),
+            "then"        => ans.then_scripts.push(s.unwrap()),
+            "else"        => ans.else_script = s,
+            _ => panic!("SUSH INTERNAL ERROR (if parse error)"),
+        };
+        true
     }
 
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<IfCommand> {

@@ -1,4 +1,4 @@
-//SPDX-FileCopyrightText: 2022 Ryuichi Ueda ryuichiueda@gmail.com
+//SPDX-FileCopyrightText: 2023 Ryuichi Ueda <ryuichiueda@gmail.com>
 //SPDX-License-Identifier: BSD-3-Clause
 
 pub mod simple;
@@ -34,7 +34,7 @@ pub trait Command {
             Ok(ForkResult::Child) => {
                 core.initialize_as_subshell(Pid::from_raw(0), pipe.pgid);
                 io::connect(pipe, self.get_redirects());
-                self.run_command(core, true);
+                self.run(core, true);
                 core.exit()
             },
             Ok(ForkResult::Parent { child } ) => {
@@ -48,29 +48,17 @@ pub trait Command {
 
     fn nofork_exec(&mut self, core: &mut ShellCore) {
         if self.get_redirects().iter_mut().all(|r| r.connect(true)){
-            self.run_command(core, false);
+            self.run(core, false);
         }else{
             core.vars.insert("?".to_string(), "1".to_string());
         }
         self.get_redirects().iter_mut().rev().for_each(|r| r.restore());
     }
 
-    fn run_command(&mut self, _: &mut ShellCore, fork: bool);
+    fn run(&mut self, _: &mut ShellCore, fork: bool);
     fn get_text(&self) -> String;
     fn get_redirects(&mut self) -> &mut Vec<Redirect>;
     fn set_force_fork(&mut self);
-}
-
-pub fn eat_blank_with_comment(feeder: &mut Feeder, core: &mut ShellCore, ans_text: &mut String) -> bool {
-    let blank_len = feeder.scanner_blank(core);
-    if blank_len == 0 {
-        return false;
-    }
-    *ans_text += &feeder.consume(blank_len);
-
-    let comment_len = feeder.scanner_comment();
-    *ans_text += &feeder.consume(comment_len);
-    true
 }
 
 pub fn eat_inner_script(feeder: &mut Feeder, core: &mut ShellCore,
@@ -85,7 +73,19 @@ pub fn eat_inner_script(feeder: &mut Feeder, core: &mut ShellCore,
     ! ans.is_none()
 }
 
-pub fn eat_redirect(feeder: &mut Feeder, core: &mut ShellCore,
+fn eat_blank_with_comment(feeder: &mut Feeder, core: &mut ShellCore, ans_text: &mut String) -> bool {
+    let blank_len = feeder.scanner_blank(core);
+    if blank_len == 0 {
+        return false;
+    }
+    *ans_text += &feeder.consume(blank_len);
+
+    let comment_len = feeder.scanner_comment();
+    *ans_text += &feeder.consume(comment_len);
+    true
+}
+
+fn eat_redirect(feeder: &mut Feeder, core: &mut ShellCore,
                      ans: &mut Vec<Redirect>, ans_text: &mut String) -> bool {
     if let Some(r) = Redirect::parse(feeder, core) {
         *ans_text += &r.text.clone();
@@ -93,6 +93,16 @@ pub fn eat_redirect(feeder: &mut Feeder, core: &mut ShellCore,
         true
     }else{
         false
+    }
+}
+
+pub fn eat_redirects(feeder: &mut Feeder, core: &mut ShellCore,
+                     ans_redirects: &mut Vec<Redirect>, ans_text: &mut String) {
+    loop {
+        eat_blank_with_comment(feeder, core, ans_text);
+        if ! eat_redirect(feeder, core, ans_redirects, ans_text){
+            break;
+        }
     }
 }
 

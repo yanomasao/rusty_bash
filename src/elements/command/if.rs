@@ -1,10 +1,10 @@
-//SPDX-FileCopyrightText: 2022 Ryuichi Ueda ryuichiueda@gmail.com
+//SPDX-FileCopyrightText: 2023 Ryuichi Ueda <ryuichiueda@gmail.com>
 //SPDX-License-Identifier: BSD-3-Clause
 
 use crate::{ShellCore, Feeder, Script};
-use super::{Command, Pipe, Redirect};
 use crate::elements::command;
 use nix::unistd::Pid;
+use super::{Command, Pipe, Redirect};
 
 #[derive(Debug)]
 pub struct IfCommand {
@@ -26,7 +26,7 @@ impl Command for IfCommand {
         }
     }
 
-    fn run_command(&mut self, core: &mut ShellCore, _: bool) {
+    fn run(&mut self, core: &mut ShellCore, _: bool) {
         for i in 0..self.if_elif_scripts.len() {
             self.if_elif_scripts[i].exec(core);
             if core.vars["?"] == "0" {
@@ -76,10 +76,11 @@ impl IfCommand {
         };
     }
 
-    fn eat_conditioned_script(word: &str, feeder: &mut Feeder,
-                              ans: &mut IfCommand, core: &mut ShellCore) -> bool {
+    fn eat_word_and_script(word: &str, feeder: &mut Feeder,
+                           ans: &mut IfCommand, core: &mut ShellCore) -> bool {
         let mut s = None;
-        if ! command::eat_inner_script(feeder, core, word, Self::end_words(word), &mut s) {
+        let ends = Self::end_words(word);
+        if ! command::eat_inner_script(feeder, core, word, ends, &mut s) {
             return false;
         }
 
@@ -91,12 +92,12 @@ impl IfCommand {
 
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<IfCommand> {
         let mut ans = Self::new();
-
+ 
         let mut if_or_elif = "if";
-        while Self::eat_conditioned_script(if_or_elif, feeder, &mut ans, core) 
-           && Self::eat_conditioned_script("then", feeder, &mut ans, core) {
+        while Self::eat_word_and_script(if_or_elif, feeder, &mut ans, core) 
+           && Self::eat_word_and_script("then", feeder, &mut ans, core) {
 
-            Self::eat_conditioned_script("else", feeder, &mut ans, core); //optional
+            Self::eat_word_and_script("else", feeder, &mut ans, core); //optional
 
             if feeder.starts_with("fi") { // If "else" exists, always it comes here.
                 ans.text.push_str(&feeder.consume(2));
@@ -110,12 +111,8 @@ impl IfCommand {
             return None;
         }
 
-        loop {
-            command::eat_blank_with_comment(feeder, core, &mut ans.text);
-            if ! command::eat_redirect(feeder, core, &mut ans.redirects, &mut ans.text){
-                break;
-            }
-        }
+        command::eat_redirects(feeder, core, &mut ans.redirects, &mut ans.text);
+//        dbg!("{:?}", &ans);
         Some(ans)
     }
 }

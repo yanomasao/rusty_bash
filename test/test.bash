@@ -337,6 +337,16 @@ res=$($com <<< 'rm -f /tmp/rusty_bash ; while [ -f /tmp/rusty_bash ] ; do echo w
 [ "$res" == "" ] || err $LINENO
 
 ### IF TEST ###
+res=$($com <<< 'touch /tmp/rusty_bash ; while [ -f /tmp/rusty_bash ] ; do echo wait ; rm /tmp/rusty_bash ; done > /tmp/rusty_bash1'; cat /tmp/rusty_bash1 ; cat /tmp/rusty_bash1 )
+[ "$res" == "wait
+wait" ] || err $LINENO
+
+### IF TEST ###
+res=$($com <<< 'if true ; then ; fi')
+[ "$?" == "2" ] || err $LINENO
+
+res=$($com <<< 'if ; then true ; fi')
+[ "$?" == "2" ] || err $LINENO
 
 res=$($com <<< 'if [ "a" == "a" ] ; then echo aa; fi')
 [ "$res" = "aa" ] || err $LINENO

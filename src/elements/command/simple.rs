@@ -42,7 +42,7 @@ impl Command for SimpleCommand {
         }
     }
 
-    fn run_command(&mut self, core: &mut ShellCore, fork: bool) {
+    fn run(&mut self, core: &mut ShellCore, fork: bool) {
         if ! fork {
             core.run_builtin(&mut self.args);
             return;
@@ -116,9 +116,8 @@ impl SimpleCommand {
         feeder.set_backup();
 
         loop {
-            command::eat_blank_with_comment(feeder, core, &mut ans.text);
-            if ! command::eat_redirect(feeder, core, &mut ans.redirects, &mut ans.text)
-                && ! Self::eat_word(feeder, &mut ans, core) {
+            command::eat_redirects(feeder, core, &mut ans.redirects, &mut ans.text);
+            if ! Self::eat_word(feeder, &mut ans, core) {
                 break;
             }
         }

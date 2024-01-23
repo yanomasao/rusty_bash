@@ -6,7 +6,7 @@ use crate::elements::subword::Subword;
 
 #[derive(Debug)]
 pub struct BraceSubword {
-    pub text: String,
+    text: String,
 }
 
 impl Subword for BraceSubword {

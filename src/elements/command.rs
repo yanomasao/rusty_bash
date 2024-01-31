@@ -66,10 +66,10 @@ pub fn eat_inner_script(feeder: &mut Feeder, core: &mut ShellCore,
    if ! feeder.starts_with(left) {
        return false;
     }
-    core.command_nest.push( (left.to_string(), right.iter().map(|e| e.to_string()).collect()) );
+    core.nest.push( (left.to_string(), right.iter().map(|e| e.to_string()).collect()) );
     feeder.consume(left.len());
     *ans = Script::parse(feeder, core);
-    core.command_nest.pop();
+    core.nest.pop();
     ! ans.is_none()
 }
 

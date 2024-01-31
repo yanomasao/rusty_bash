@@ -22,7 +22,7 @@ impl UnquotedSubword {
         if len == 0 {
             return None;
         }
- 
+
         ans.text = feeder.consume(len);
         Some(ans)
     }

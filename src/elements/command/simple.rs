@@ -30,9 +30,9 @@ pub struct SimpleCommand {
 
 impl Command for SimpleCommand {
     fn exec(&mut self, core: &mut ShellCore, pipe: &mut Pipe) -> Option<Pid> {
-        self.args = self.words.iter()
-                    .filter(|w| w.text != "")
-                    .map(|w| w.text.clone()).collect();
+        for w in self.words.iter_mut() {
+            self.args.append(&mut w.eval());
+        }
 
         if self.args.len() == 0 {
             return None;
@@ -101,7 +101,7 @@ impl SimpleCommand {
             force_fork: false,
         }
     }
- 
+
     fn eat_word(feeder: &mut Feeder, ans: &mut SimpleCommand, core: &mut ShellCore) -> bool {
         let w = match Word::parse(feeder, core) {
             Some(w) => w,

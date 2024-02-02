@@ -101,7 +101,7 @@ impl SimpleCommand {
             force_fork: false,
         }
     }
- 
+
     fn eat_word(feeder: &mut Feeder, ans: &mut SimpleCommand, core: &mut ShellCore) -> bool {
         let w = match Word::parse(feeder, core) {
             Some(w) => w,

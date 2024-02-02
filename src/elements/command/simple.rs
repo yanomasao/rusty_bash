@@ -31,11 +31,7 @@ pub struct SimpleCommand {
 impl Command for SimpleCommand {
     fn exec(&mut self, core: &mut ShellCore, pipe: &mut Pipe) -> Option<Pid> {
         for w in self.words.iter_mut() {
-            let mut ws = w.eval().iter()
-                         .filter(|e| e.text.len() != 0)
-                         .map(|e| e.text.clone())
-                         .collect::<Vec<String>>();
-            self.args.append(&mut ws);
+            self.args.append(&mut w.eval());
         }
 
         if self.args.len() == 0 {

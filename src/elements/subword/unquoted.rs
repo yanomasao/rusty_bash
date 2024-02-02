@@ -9,21 +9,18 @@ pub struct UnquotedSubword {
 }
 
 impl UnquotedSubword {
-    fn new() -> UnquotedSubword {
+    fn new(s: &str) -> UnquotedSubword {
         UnquotedSubword {
-            text: String::new(),
+            text: s.to_string(),
         }
     }
 
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<UnquotedSubword> {
-        let mut ans = Self::new();
-
         let len = feeder.scanner_word(core);
         if len == 0 {
             return None;
         }
 
-        ans.text = feeder.consume(len);
-        Some(ans)
+        Some(UnquotedSubword::new(&feeder.consume(len)))
     }
 }

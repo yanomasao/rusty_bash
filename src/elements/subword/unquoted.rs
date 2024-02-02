@@ -3,7 +3,7 @@
 
 use crate::{ShellCore, Feeder};
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct UnquotedSubword {
     pub text: String,
 }

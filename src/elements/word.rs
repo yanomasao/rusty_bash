@@ -4,7 +4,7 @@
 use crate::{Feeder, ShellCore};
 use crate::elements::subword::unquoted::UnquotedSubword;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Word {
     pub text: String,
     pub subwords: Vec<UnquotedSubword>,
@@ -16,6 +16,10 @@ impl Word {
             text: String::new(),
             subwords: vec![],
         }
+    }
+
+    pub fn eval(&mut self) -> Vec<Word> {
+        vec![self.clone()]
     }
 
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<Word> {

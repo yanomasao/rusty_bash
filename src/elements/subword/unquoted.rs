@@ -16,7 +16,7 @@ impl UnquotedSubword {
     }
 
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<UnquotedSubword> {
-        let len = feeder.scanner_word(core);
+        let len = feeder.scanner_unquoted_subword(core);
         if len == 0 {
             return None;
         }

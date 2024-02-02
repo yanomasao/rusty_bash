@@ -19,6 +19,10 @@ impl Word {
     }
 
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<Word> {
+        if feeder.starts_with("#") {
+            return None;
+        }
+
         let mut ans = Word::new();
         while let Some(sw) = UnquotedSubword::parse(feeder, core) {
             ans.text += &sw.text.clone();

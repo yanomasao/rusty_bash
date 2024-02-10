@@ -18,10 +18,8 @@ impl Subword for SingleQuotedSubword {
     }
 
     fn unquote(&mut self) {
-        if ! self.text.starts_with("\\") {
-            return;
-        }
-
+        dbg!("{:?}", &self);
+        self.text.pop();
         self.text.remove(0);
     }
 }
@@ -34,17 +32,15 @@ impl SingleQuotedSubword {
     }
 
     pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<SingleQuotedSubword> {
-        for i in 0..3 {
-            let len = match i {
-                0 => feeder.scanner_escaped_char(core),
-                1 => feeder.scanner_subword_symbol(),
-                2 => feeder.scanner_unquoted_subword(),
-                _ => 0,
-            };
-            if len != 0 {
-                return Some(Self::new( &feeder.consume(len) ));
-            }
+        if ! feeder.starts_with("'") {
+            return None;
         }
+
+        let len = feeder.scanner_single_quoted_subword(core);
+        if len != 0 {
+            return Some(Self::new( &feeder.consume(len) ));
+        }
+
         None
     }
 }

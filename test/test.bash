@@ -452,6 +452,15 @@ res=$($com <<< 'echo \')
 res=$($com <<< 'echo -n \')
 [ "$res" == "" ] || err $LINENO
 
+res=$($com <<< "echo 'abc'")
+[ "$res" == "abc" ] || err $LINENO
+
+res=$($com <<< "echo 123'abc'")
+[ "$res" == "123abc" ] || err $LINENO
+
+res=$($com <<< "echo 123'abc'def")
+[ "$res" == "123abcdef" ] || err $LINENO
+
 ### WHILE TEST ###
 
 res=$($com <<< 'touch /tmp/rusty_bash ; while [ -f /tmp/rusty_bash ] ; do echo wait ; rm /tmp/rusty_bash ; done > /tmp/rusty_bash1'; cat /tmp/rusty_bash1 ; cat /tmp/rusty_bash1 )

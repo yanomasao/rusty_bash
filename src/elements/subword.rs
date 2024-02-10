@@ -1,9 +1,11 @@
 //SPDX-FileCopyrightText: 2024 Ryuichi Ueda ryuichiueda@gmail.com
 //SPDX-License-Identifier: BSD-3-Clause
 
+mod single_quoted;
 mod unquoted;
 
 use crate::{ShellCore, Feeder};
+use crate::elements::subword::single_quoted::SingleQuotedSubword;
 use crate::elements::subword::unquoted::UnquotedSubword;
 use std::fmt;
 use std::fmt::Debug;
@@ -28,6 +30,7 @@ pub trait Subword {
 }
 
 pub fn parse(feeder: &mut Feeder, core: &mut ShellCore) -> Option<Box<dyn Subword>> {
-    if let Some(a) = UnquotedSubword::parse(feeder, core){ Some(Box::new(a)) }
+    if let Some(a) = SingleQuotedSubword::parse(feeder, core){ Some(Box::new(a)) }
+    else if let Some(a) = UnquotedSubword::parse(feeder, core){ Some(Box::new(a)) }
     else{ None }
 }

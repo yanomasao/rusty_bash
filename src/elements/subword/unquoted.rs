@@ -24,6 +24,10 @@ impl Subword for UnquotedSubword {
 
         self.text.remove(0);
     }
+
+    fn replace_parameter(&mut self, len: usize, val: &str) {
+        self.text = (val.to_owned() + &self.text[len..]).to_string();
+    }
 }
 
 impl UnquotedSubword {

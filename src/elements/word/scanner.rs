@@ -2,7 +2,7 @@
 //SPDX-License-Identifier: BSD-3-Clause
 
 fn is_lower(ch: char) -> bool { 'a' <= ch && ch <= 'z' }
-fn is_upper(ch: char) -> bool { 'A' <= ch && ch <= 'B' }
+fn is_upper(ch: char) -> bool { 'A' <= ch && ch <= 'Z' }
 fn is_alphabet(ch: char) -> bool { is_lower(ch) || is_upper(ch) }
 fn is_number(ch: char) -> bool { '0' <= ch && ch <= '9' }
 
@@ -20,6 +20,8 @@ pub fn name(s: &str) -> usize {
     for ch in s[1..].chars() {
         if is_alphabet(ch) || is_number(ch) || ch == '_' {
             ans += 1;
+        }else{
+            break;
         }
     }
 

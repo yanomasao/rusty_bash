@@ -15,12 +15,38 @@ pub struct Word {
 }
 
 impl Word {
-    pub fn eval(&mut self) -> Vec<String> {
+    pub fn eval(&mut self, core: &ShellCore) -> Vec<String> {
         let mut ws = brace_expansion::eval(self);
 
+        ws.iter_mut().for_each(|w| w.parameter_expansion(core));
         ws.iter_mut().for_each(|w| w.unquote());
         ws.iter_mut().for_each(|w| w.connect_subwords());
         ws.iter().map(|w| w.text.clone()).filter(|arg| arg.len() > 0).collect()
+    }
+
+    fn parameter_expansion(&mut self, core: &ShellCore) {
+        let mut dollar = false;
+        for sw in self.subwords.iter_mut() {
+            if dollar {
+                let text = sw.get_text().to_string();
+                let len_as_name = scanner::name(&text);
+                let name = text[..len_as_name].to_string();
+
+                let val = match core.vars.get(&name) {
+                    Some(v) => v.clone(), 
+                    None => "".to_string(),
+                };
+
+                sw.replace_parameter(len_as_name, &val);
+
+                dollar = false;
+                continue;
+            }
+
+            if sw.get_text() == "$" {
+                dollar = true;
+            }
+        }
     }
 
     fn unquote(&mut self) {

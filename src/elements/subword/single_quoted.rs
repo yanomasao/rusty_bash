@@ -22,6 +22,8 @@ impl Subword for SingleQuotedSubword {
         self.text.pop();
         self.text.remove(0);
     }
+
+    fn replace_parameter(&mut self, _: usize, _: &str) { }
 }
 
 impl SingleQuotedSubword {

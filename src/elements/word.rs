@@ -17,11 +17,46 @@ pub struct Word {
 impl Word {
     pub fn eval(&mut self, core: &ShellCore) -> Vec<String> {
         let mut ws = brace_expansion::eval(self);
+        ws.iter_mut().for_each(|w| w.concatenate_subwords());
 
         ws.iter_mut().for_each(|w| w.parameter_expansion(core));
         ws.iter_mut().for_each(|w| w.unquote());
         ws.iter_mut().for_each(|w| w.connect_subwords());
         ws.iter().map(|w| w.text.clone()).filter(|arg| arg.len() > 0).collect()
+    }
+
+    fn concatenate_subwords(&mut self) {
+        if self.subwords.len() == 0 {
+            return;
+        }
+
+        let mut ans = vec![];
+        let mut left = self.subwords.remove(0);
+        while self.subwords.len() != 0 {
+            let left_str = &left.get_text();
+            let right_str = &self.subwords[0].get_text();
+
+            if left_str.ends_with("'") 
+            || left_str.ends_with("\"") 
+            || left_str.ends_with("$") {
+                ans.push(left);
+                left = self.subwords.remove(0);
+                continue;
+            }
+
+            if right_str.ends_with("'") 
+            || right_str.ends_with("\"") 
+            || right_str.ends_with("$") {
+                ans.push(left);
+                left = self.subwords.remove(0);
+                continue;
+            }
+
+            left.merge(&self.subwords.remove(0));
+        }
+        ans.push(left);
+
+        self.subwords = ans;
     }
 
     fn parameter_expansion(&mut self, core: &ShellCore) {

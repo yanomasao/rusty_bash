@@ -14,17 +14,6 @@ pub struct Word {
     pub subwords: Vec<Box<dyn Subword>>,
 }
 
-fn connectable(s: &str) -> bool {
-    if s.len() == 0 {
-        return true;
-    }
-
-    let c = s.chars().nth(0).unwrap();
-    match "'$\\\"".find(c) {
-        Some(_) => false,
-        None    => true,
-    }
-}
 
 impl Word {
     pub fn eval(&mut self, core: &ShellCore) -> Vec<String> {
@@ -34,32 +23,9 @@ impl Word {
     }
 
     fn expansion(&mut self, core: &ShellCore) {
-        self.concatenate_subwords();
         parameter_expansion::eval(self, core);
         self.unquote();
         self.connect_text();
-    }
-
-    fn concatenate_subwords(&mut self) {
-        if self.subwords.len() == 0 {
-            return;
-        }
-
-        let mut ans = vec![];
-        let mut left = self.subwords.remove(0);
-        while self.subwords.len() != 0 {
-            let right = self.subwords.remove(0);
-            if connectable(left.get_text()) 
-            && connectable(right.get_text()) {
-                left.merge(&right);
-            }else{
-                ans.push(left);
-                left = right;
-            }
-        }
-        ans.push(left);
-
-        self.subwords = ans;
     }
 
     fn unquote(&mut self) {

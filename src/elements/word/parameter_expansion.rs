@@ -5,6 +5,8 @@ use crate::elements::word::Word;
 use crate::ShellCore;
 
 pub fn eval(word: &mut Word, core: &ShellCore) {
+    concatenate_subwords(word); 
+
     let mut dollar = false;
     for sw in word.subwords.iter_mut() {
         if dollar {
@@ -55,4 +57,38 @@ pub fn name(s: &str) -> usize {
     }
 
     ans
+}
+
+fn connectable(s: &str) -> bool {
+    if s.len() == 0 {
+        return true;
+    }
+
+    let c = s.chars().nth(0).unwrap();
+    match "'$\\\"".find(c) {
+        Some(_) => false,
+        None    => true,
+    }
+}
+
+fn concatenate_subwords(word: &mut Word) {
+    if word.subwords.len() == 0 {
+        return;
+    }
+
+    let mut ans = vec![];
+    let mut left = word.subwords.remove(0);
+    while word.subwords.len() != 0 {
+        let right = word.subwords.remove(0);
+        if connectable(left.get_text()) 
+        && connectable(right.get_text()) {
+            left.merge(&right);
+        }else{
+            ans.push(left);
+            left = right;
+        }
+    }
+    ans.push(left);
+
+    word.subwords = ans;
 }

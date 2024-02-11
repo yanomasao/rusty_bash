@@ -443,6 +443,9 @@ res=$($com <<< 'echo あ{a,b}d{},c}')
 
 # escaping
 
+res=$($com <<< "echo a\ \ \ a")
+[ "$res" == "a   a" ] || err $LINENO
+
 res=$($com <<< 'echo \(')
 [ "$res" == "(" ] || err $LINENO
 

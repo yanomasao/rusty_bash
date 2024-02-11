@@ -44,6 +44,7 @@ impl Word {
             }
 
             if sw.get_text() == "$" {
+                sw.replace_parameter(1, "");
                 dollar = true;
             }
         }

@@ -2,6 +2,7 @@
 //SPDX-License-Identifier: BSD-3-Clause
 
 mod brace_expansion;
+mod scanner;
 
 use crate::{ShellCore, Feeder};
 use crate::elements::subword;

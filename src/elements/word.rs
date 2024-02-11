@@ -49,16 +49,14 @@ impl Word {
         let mut ans = vec![];
         let mut left = self.subwords.remove(0);
         while self.subwords.len() != 0 {
-            let left_str = &left.get_text();
-            let right_str = &self.subwords[0].get_text();
-
-            if connectable(left_str) && connectable(right_str) {
-                left.merge(&self.subwords.remove(0));
+            let right = self.subwords.remove(0);
+            if connectable(left.get_text()) 
+            && connectable(right.get_text()) {
+                left.merge(&right);
             }else{
                 ans.push(left);
-                left = self.subwords.remove(0);
+                left = right;
             }
-
         }
         ans.push(left);
 

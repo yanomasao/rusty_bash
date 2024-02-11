@@ -14,25 +14,31 @@ pub struct Word {
     pub subwords: Vec<Box<dyn Subword>>,
 }
 
+fn connectable(s: &str) -> bool {
+    if s.len() == 0 {
+        return true;
+    }
+
+    let c = s.chars().nth(0).unwrap();
+    if let Some(_) = "'$\\\"".find(c) {
+        false
+    }else{
+        true
+    }
+}
+
 impl Word {
     pub fn eval(&mut self, core: &ShellCore) -> Vec<String> {
         let mut ws = brace_expansion::eval(self);
-        /*
-        ws.iter_mut().for_each(|w| w.concatenate_subwords());
-
-        ws.iter_mut().for_each(|w| w.parameter_expansion(core));
-        ws.iter_mut().for_each(|w| w.unquote());
-        ws.iter_mut().for_each(|w| w.connect_subwords());
-        */
         ws.iter_mut().for_each(|w| w.expansion(core));
         ws.iter().map(|w| w.text.clone()).filter(|arg| arg.len() > 0).collect()
     }
 
-    fn expansion(&mut self, core: &ShellCore ) {
+    fn expansion(&mut self, core: &ShellCore) {
         self.concatenate_subwords();
         self.parameter_expansion(core);
         self.unquote();
-        self.connect_subwords();
+        self.connect_text();
     }
 
     fn concatenate_subwords(&mut self) {
@@ -46,25 +52,13 @@ impl Word {
             let left_str = &left.get_text();
             let right_str = &self.subwords[0].get_text();
 
-            if left_str.starts_with("'") 
-            || left_str.starts_with("\"") 
-            || left_str.starts_with("\\") 
-            || left_str.starts_with("$") {
+            if connectable(left_str) && connectable(right_str) {
+                left.merge(&self.subwords.remove(0));
+            }else{
                 ans.push(left);
                 left = self.subwords.remove(0);
-                continue;
             }
 
-            if right_str.starts_with("'") 
-            || right_str.starts_with("\"") 
-            || right_str.starts_with("\\") 
-            || right_str.starts_with("$") {
-                ans.push(left);
-                left = self.subwords.remove(0);
-                continue;
-            }
-
-            left.merge(&self.subwords.remove(0));
         }
         ans.push(left);
 
@@ -101,7 +95,7 @@ impl Word {
         self.subwords.iter_mut().for_each(|w| w.unquote());
     }
 
-    fn connect_subwords(&mut self) {
+    fn connect_text(&mut self) {
         self.text = self.subwords.iter()
                     .map(|s| s.get_text().clone())
                     .collect::<String>();

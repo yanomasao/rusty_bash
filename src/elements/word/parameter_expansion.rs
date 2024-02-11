@@ -68,8 +68,8 @@ fn find_parameter_end_no_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) 
         if len_as_name != text.len() {
             nm += &text[0..len_as_name];
             match core.vars.get(&nm) {
-                Some(v) => return (ans+1, v.clone()), 
-                None => return (ans+1, "".to_string()),
+                Some(v) => return (ans+1, v.clone() + &text[len_as_name..]), 
+                None => return (ans+1, text[len_as_name..].to_string()),
             };
         }
 

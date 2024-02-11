@@ -18,33 +18,6 @@ pub fn eval(word: &mut Word, core: &ShellCore) {
             }
         }
     }
-/*
-    concatenate_subwords(word); 
-
-    let mut dollar = false;
-    for sw in word.subwords.iter_mut() {
-        if dollar {
-            let text = sw.get_text().to_string();
-            let len_as_name = name(&text);
-            let name = text[..len_as_name].to_string();
-
-            let val = match core.vars.get(&name) {
-                Some(v) => v.clone(), 
-                None => "".to_string(),
-            };
-
-            sw.replace_parameter(len_as_name, &val);
-
-            dollar = false;
-            continue;
-        }
-
-        if sw.get_text() == "$" {
-            sw.replace_parameter(1, "");
-            dollar = true;
-        }
-    }
-    */
 }
 
 fn replace(subwords: &mut [Box<dyn Subword>], val: &String) {
@@ -136,41 +109,3 @@ pub fn name(s: &str) -> usize {
 
     ans
 }
-
-/*
-fn connectable(s: &str) -> bool {
-    if s.len() == 0 {
-        return true;
-    }
-
-    let c = s.chars().nth(0).unwrap();
-    match "'$\\\"".find(c) {
-        Some(_) => false,
-        None    => true,
-    }
-}
-*/
-
-/*
-fn concatenate_subwords(word: &mut Word) {
-    if word.subwords.len() == 0 {
-        return;
-    }
-
-    let mut ans = vec![];
-    let mut left = word.subwords.remove(0);
-    while word.subwords.len() != 0 {
-        let right = word.subwords.remove(0);
-        if connectable(left.get_text()) 
-        && connectable(right.get_text()) {
-            left.merge(&right);
-        }else{
-            ans.push(left);
-            left = right;
-        }
-    }
-    ans.push(left);
-
-    word.subwords = ans;
-}
-*/

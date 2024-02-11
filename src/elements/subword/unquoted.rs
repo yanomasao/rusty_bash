@@ -11,6 +11,7 @@ pub struct UnquotedSubword {
 
 impl Subword for UnquotedSubword {
     fn get_text(&self) -> &str {&self.text.as_ref()}
+    fn set_text(&mut self, s: &str) { self.text = s.to_string(); }
     fn boxed_clone(&self) -> Box<dyn Subword> {Box::new(self.clone())}
 
     fn merge(&mut self, right: &Box<dyn Subword>) {

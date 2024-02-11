@@ -17,12 +17,22 @@ pub struct Word {
 impl Word {
     pub fn eval(&mut self, core: &ShellCore) -> Vec<String> {
         let mut ws = brace_expansion::eval(self);
+        /*
         ws.iter_mut().for_each(|w| w.concatenate_subwords());
 
         ws.iter_mut().for_each(|w| w.parameter_expansion(core));
         ws.iter_mut().for_each(|w| w.unquote());
         ws.iter_mut().for_each(|w| w.connect_subwords());
+        */
+        ws.iter_mut().for_each(|w| w.expansion(core));
         ws.iter().map(|w| w.text.clone()).filter(|arg| arg.len() > 0).collect()
+    }
+
+    fn expansion(&mut self, core: &ShellCore ) {
+        self.concatenate_subwords();
+        self.parameter_expansion(core);
+        self.unquote();
+        self.connect_subwords();
     }
 
     fn concatenate_subwords(&mut self) {
@@ -36,17 +46,19 @@ impl Word {
             let left_str = &left.get_text();
             let right_str = &self.subwords[0].get_text();
 
-            if left_str.ends_with("'") 
-            || left_str.ends_with("\"") 
-            || left_str.ends_with("$") {
+            if left_str.starts_with("'") 
+            || left_str.starts_with("\"") 
+            || left_str.starts_with("\\") 
+            || left_str.starts_with("$") {
                 ans.push(left);
                 left = self.subwords.remove(0);
                 continue;
             }
 
-            if right_str.ends_with("'") 
-            || right_str.ends_with("\"") 
-            || right_str.ends_with("$") {
+            if right_str.starts_with("'") 
+            || right_str.starts_with("\"") 
+            || right_str.starts_with("\\") 
+            || right_str.starts_with("$") {
                 ans.push(left);
                 left = self.subwords.remove(0);
                 continue;

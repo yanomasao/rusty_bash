@@ -1,6 +1,35 @@
 //SPDX-FileCopyrightText: 2024 Ryuichi Ueda ryuichiueda@gmail.com
 //SPDX-License-Identifier: BSD-3-Clause
 
+use crate::elements::word::Word;
+use crate::ShellCore;
+
+pub fn eval(word: &mut Word, core: &ShellCore) {
+    let mut dollar = false;
+    for sw in word.subwords.iter_mut() {
+        if dollar {
+            let text = sw.get_text().to_string();
+            let len_as_name = name(&text);
+            let name = text[..len_as_name].to_string();
+
+            let val = match core.vars.get(&name) {
+                Some(v) => v.clone(), 
+                None => "".to_string(),
+            };
+
+            sw.replace_parameter(len_as_name, &val);
+
+            dollar = false;
+            continue;
+        }
+
+        if sw.get_text() == "$" {
+            sw.replace_parameter(1, "");
+            dollar = true;
+        }
+    }
+}
+
 fn is_lower(ch: char) -> bool { 'a' <= ch && ch <= 'z' }
 fn is_upper(ch: char) -> bool { 'A' <= ch && ch <= 'Z' }
 fn is_alphabet(ch: char) -> bool { is_lower(ch) || is_upper(ch) }

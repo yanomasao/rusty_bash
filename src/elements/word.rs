@@ -2,7 +2,7 @@
 //SPDX-License-Identifier: BSD-3-Clause
 
 mod brace_expansion;
-mod scanner;
+mod parameter_expansion;
 
 use crate::{ShellCore, Feeder};
 use crate::elements::subword;
@@ -20,10 +20,9 @@ fn connectable(s: &str) -> bool {
     }
 
     let c = s.chars().nth(0).unwrap();
-    if let Some(_) = "'$\\\"".find(c) {
-        false
-    }else{
-        true
+    match "'$\\\"".find(c) {
+        Some(_) => false,
+        None    => true,
     }
 }
 
@@ -36,7 +35,7 @@ impl Word {
 
     fn expansion(&mut self, core: &ShellCore) {
         self.concatenate_subwords();
-        self.parameter_expansion(core);
+        parameter_expansion::eval(self, core);
         self.unquote();
         self.connect_text();
     }
@@ -61,32 +60,6 @@ impl Word {
         ans.push(left);
 
         self.subwords = ans;
-    }
-
-    fn parameter_expansion(&mut self, core: &ShellCore) {
-        let mut dollar = false;
-        for sw in self.subwords.iter_mut() {
-            if dollar {
-                let text = sw.get_text().to_string();
-                let len_as_name = scanner::name(&text);
-                let name = text[..len_as_name].to_string();
-
-                let val = match core.vars.get(&name) {
-                    Some(v) => v.clone(), 
-                    None => "".to_string(),
-                };
-
-                sw.replace_parameter(len_as_name, &val);
-
-                dollar = false;
-                continue;
-            }
-
-            if sw.get_text() == "$" {
-                sw.replace_parameter(1, "");
-                dollar = true;
-            }
-        }
     }
 
     fn unquote(&mut self) {

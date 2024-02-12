@@ -5,6 +5,11 @@ use crate::elements::word::Word;
 use crate::elements::subword::Subword;
 use crate::ShellCore;
 
+fn is_lower(ch: char) -> bool { 'a' <= ch && ch <= 'z' }
+fn is_upper(ch: char) -> bool { 'A' <= ch && ch <= 'Z' }
+fn is_alphabet(ch: char) -> bool { is_lower(ch) || is_upper(ch) }
+fn is_number(ch: char) -> bool { '0' <= ch && ch <= '9' }
+
 pub fn eval(word: &mut Word, core: &ShellCore) {
     for i in word.find("$") {
         let (len, s) = find_tail(&word.subwords[i+1..], core);
@@ -51,7 +56,10 @@ fn find_tail_no_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize
     let mut nm = String::new();
     for sw in subwords {
         let text = sw.get_text().to_string();
-        let len_as_name = name(&text);
+        let mut len_as_name = name(&text);
+        if len_as_name == 0 {
+            len_as_name = param_symbol(&text);
+        }
 
         if len_as_name == 0 {
             break;
@@ -68,10 +76,13 @@ fn find_tail_no_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize
     (ans, core.get_var(&nm))
 }
 
-fn is_lower(ch: char) -> bool { 'a' <= ch && ch <= 'z' }
-fn is_upper(ch: char) -> bool { 'A' <= ch && ch <= 'Z' }
-fn is_alphabet(ch: char) -> bool { is_lower(ch) || is_upper(ch) }
-fn is_number(ch: char) -> bool { '0' <= ch && ch <= '9' }
+pub fn param_symbol(s: &str) -> usize {
+    if let Some(_) = "$?".find(s) {
+        1
+    }else{
+        0
+    }
+}
 
 pub fn name(s: &str) -> usize {
     if s.len() == 0 {

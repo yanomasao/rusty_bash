@@ -11,10 +11,16 @@ fn is_alphabet(ch: char) -> bool { is_lower(ch) || is_upper(ch) }
 fn is_number(ch: char) -> bool { '0' <= ch && ch <= '9' }
 
 pub fn eval(word: &mut Word, core: &ShellCore) {
+    let mut skip = 0;
     for i in word.find("$") {
+        if i < skip {
+            continue;
+        }
+
         let (len, s) = find_tail(&word.subwords[i+1..], core);
         if len > 0 {
             replace(&mut word.subwords[i..i+len+1], &s);
+            skip = i + len + 1;
         }
     }
 }
@@ -27,7 +33,11 @@ fn replace(subwords: &mut [Box<dyn Subword>], val: &String) {
 }
 
 fn find_tail(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize, String) {
-    if subwords.len() > 0 && subwords[0].get_text() == "{" {
+    if subwords.len() == 0 {
+        return (0, "".to_string());
+    }
+
+    if subwords[0].get_text() == "{" {
         find_tail_brace(subwords, core)
     }else{
         find_tail_no_brace(subwords, core)
@@ -53,30 +63,30 @@ fn find_tail_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize, S
 
 fn find_tail_no_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize, String) {
     let mut ans = 0;
-    let mut nm = String::new();
+    let mut name = String::new();
     for sw in subwords {
         let text = sw.get_text().to_string();
-        let mut len_as_name = name(&text);
-        if len_as_name == 0 {
-            len_as_name = param_symbol(&text);
+        let mut len_as_name = param_name(&text);
+        if len_as_name == 0 && name.len() == 0 {
+            len_as_name = special_param(&text);
         }
 
         if len_as_name == 0 {
             break;
         }
         if len_as_name != text.len() {
-            nm += &text[0..len_as_name];
-            return (ans+1, core.get_var(&nm) + &text[len_as_name..]);
+            name += &text[0..len_as_name];
+            return (ans+1, core.get_var(&name) + &text[len_as_name..]);
         }
 
         ans += 1;
-        nm += &text;
+        name += &text;
     }
 
-    (ans, core.get_var(&nm))
+    (ans, core.get_var(&name))
 }
 
-pub fn param_symbol(s: &str) -> usize {
+pub fn special_param(s: &str) -> usize {
     if let Some(_) = "$?".find(s) {
         1
     }else{
@@ -84,7 +94,7 @@ pub fn param_symbol(s: &str) -> usize {
     }
 }
 
-pub fn name(s: &str) -> usize {
+pub fn param_name(s: &str) -> usize {
     if s.len() == 0 {
         return 0;
     }

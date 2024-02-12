@@ -10,20 +10,12 @@ pub fn eval(word: &mut Word, core: &ShellCore) {
         return;
     }
 
-    for i in find_doller(word) {
+    for i in word.find("$") {
         let (len, s) = find_tail(&word.subwords[i+1..], core);
         if len > 0 {
             replace(&mut word.subwords[i..i+len+1], &s);
         }
     }
-}
-
-fn find_doller(word: &mut Word) -> Vec<usize> {
-    word.subwords.iter()
-        .enumerate()
-        .filter(|e| e.1.get_text() == "$")
-        .map(|e| e.0)
-        .collect()
 }
 
 fn replace(subwords: &mut [Box<dyn Subword>], val: &String) {

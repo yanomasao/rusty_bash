@@ -37,10 +37,7 @@ fn find_tail_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize, S
         }
 
         if sw.get_text() == "}" {
-            match core.vars.get(&name) {
-                Some(v) => return (i+1, v.clone()), 
-                None => return (i+1, "".to_string()),
-            };
+            return (i+1, core.get_var(&name));
         }
 
         name += &sw.get_text();
@@ -61,20 +58,14 @@ fn find_tail_no_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize
         }
         if len_as_name != text.len() {
             nm += &text[0..len_as_name];
-            match core.vars.get(&nm) {
-                Some(v) => return (ans+1, v.clone() + &text[len_as_name..]), 
-                None => return (ans+1, text[len_as_name..].to_string()),
-            };
+            return (ans+1, core.get_var(&nm) + &text[len_as_name..]);
         }
 
         ans += 1;
         nm += &text;
     }
 
-    match core.vars.get(&nm) {
-        Some(v) => (ans, v.clone()), 
-        None => (ans, "".to_string()),
-     }
+    (ans, core.get_var(&nm))
 }
 
 fn is_lower(ch: char) -> bool { 'a' <= ch && ch <= 'z' }

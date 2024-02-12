@@ -6,18 +6,24 @@ use crate::elements::subword::Subword;
 use crate::ShellCore;
 
 pub fn eval(word: &mut Word, core: &ShellCore) {
-    if word.subwords.len() == 0 {
+    if word.subwords.len() < 2 {
         return;
     }
 
-    for i in 0..word.subwords.len()-1 {
-        if word.subwords[i].get_text() == "$" {
-            let (len, s) = find_parameter_end(&word.subwords[i+1..], core);
-            if len > 0 {
-                replace(&mut word.subwords[i..i+len+1], &s);
-            }
+    for i in find_doller(word) {
+        let (len, s) = find_tail(&word.subwords[i+1..], core);
+        if len > 0 {
+            replace(&mut word.subwords[i..i+len+1], &s);
         }
     }
+}
+
+fn find_doller(word: &mut Word) -> Vec<usize> {
+    word.subwords.iter()
+        .enumerate()
+        .filter(|e| e.1.get_text() == "$")
+        .map(|e| e.0)
+        .collect()
 }
 
 fn replace(subwords: &mut [Box<dyn Subword>], val: &String) {
@@ -27,15 +33,15 @@ fn replace(subwords: &mut [Box<dyn Subword>], val: &String) {
     subwords[0].set_text(val);
 }
 
-fn find_parameter_end(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize, String) {
+fn find_tail(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize, String) {
     if subwords.len() > 0 && subwords[0].get_text() == "{" {
-        find_parameter_end_brace(subwords, core)
+        find_tail_brace(subwords, core)
     }else{
-        find_parameter_end_no_brace(subwords, core)
+        find_tail_no_brace(subwords, core)
     }
 }
 
-fn find_parameter_end_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize, String) {
+fn find_tail_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize, String) {
     let mut name = String::new();
     for (i, sw) in subwords.iter().enumerate() {
         if i == 0 {
@@ -55,7 +61,7 @@ fn find_parameter_end_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> 
     (0, String::new())
 }
 
-fn find_parameter_end_no_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize, String) {
+fn find_tail_no_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize, String) {
     let mut ans = 0;
     let mut nm = String::new();
     for sw in subwords {

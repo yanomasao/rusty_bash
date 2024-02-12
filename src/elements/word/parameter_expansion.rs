@@ -87,7 +87,7 @@ fn find_tail_no_brace(subwords: &[Box<dyn Subword>], core: &ShellCore) -> (usize
 }
 
 pub fn special_param(s: &str) -> usize {
-    if let Some(_) = "$?".find(s) {
+    if let Some(_) = "*@#?-$!0".find(s) {
         1
     }else{
         0

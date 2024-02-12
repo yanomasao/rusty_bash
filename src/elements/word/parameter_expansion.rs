@@ -6,10 +6,6 @@ use crate::elements::subword::Subword;
 use crate::ShellCore;
 
 pub fn eval(word: &mut Word, core: &ShellCore) {
-    if word.subwords.len() < 2 {
-        return;
-    }
-
     for i in word.find("$") {
         let (len, s) = find_tail(&word.subwords[i+1..], core);
         if len > 0 {

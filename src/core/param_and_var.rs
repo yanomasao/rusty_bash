@@ -10,4 +10,15 @@ impl ShellCore {
             None      => "",
         }.to_string()
     }
+
+    pub fn get_var_ref(&self, key: &str) -> &str {
+        match self.vars.get(key) {
+            Some(val) => val,
+            None      => "",
+        }
+    }
+
+    pub fn set_var(&mut self, key: &str, val: &str) {
+        self.vars.insert(key.to_string(), val.to_string());
+    }
 }

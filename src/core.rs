@@ -21,7 +21,7 @@ use std::sync::atomic::Ordering::Relaxed;
 pub struct ShellCore {
     pub history: Vec<String>,
     pub flags: String,
-    pub vars: HashMap<String, String>,
+    vars: HashMap<String, String>,
     pub builtins: HashMap<String, fn(&mut ShellCore, &mut Vec<String>) -> i32>,
     pub sigint: Arc<AtomicBool>,
     pub is_subshell: bool,

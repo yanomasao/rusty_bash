@@ -458,6 +458,9 @@ res=$($com <<< 'echo -n \')
 res=$($com <<< "echo 'abc'")
 [ "$res" == "abc" ] || err $LINENO
 
+res=$($com <<< "echo 'abあいうc'")
+[ "$res" == "abあいうc" ] || err $LINENO
+
 res=$($com <<< "echo 123'abc'")
 [ "$res" == "123abc" ] || err $LINENO
 

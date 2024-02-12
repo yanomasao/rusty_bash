@@ -3,7 +3,7 @@
 
 pub mod builtins;
 pub mod jobtable;
-pub mod param_and_var;
+pub mod parameter;
 
 use std::collections::HashMap;
 use std::os::fd::RawFd;

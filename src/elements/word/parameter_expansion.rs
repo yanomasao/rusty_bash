@@ -14,14 +14,17 @@ pub fn eval(word: &mut Word, core: &mut ShellCore) {
         .for_each(|w| w.parameter_expansion(core));
 }
 
-pub fn connect_names(subwords: &mut [Box<dyn Subword>]) {
-    for i in 1..subwords.len() {
-        if subwords[i].get_type() != SubwordType::VarName {
-            return;
+fn connect_names(subwords: &mut [Box<dyn Subword>]) {
+    let mut text = "$".to_string();
+    let mut pos = 1;
+    for s in &mut subwords[1..] {
+        if s.get_type() != SubwordType::VarName {
+            break;
         }
-
-        let right = subwords[i].clone();
-        subwords[0].merge(SubwordType::Parameter, &right);
-        subwords[i].clear();
+        text += s.get_text();
+        pos += 1;
     }
+
+    subwords[0].set(SubwordType::Parameter, &text);
+    subwords[1..pos].iter_mut().for_each(|s| s.clear());
 }

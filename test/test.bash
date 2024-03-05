@@ -482,9 +482,6 @@ res=$($com <<< 'echo $BASH{PID,_SUBSHELL} | sed -E s@[0-9]+@num@')
 res=$($com <<< 'echo ~ | grep -q /')
 [ "$?" == "0" ] || err $LINENO
 
-res=$($com <<< 'echo ~root')
-[ "$res" == "/root" -o "$res" == "/var/root" ] || err $LINENO
-
 res=$($com <<< 'cd /; cd /etc; echo ~+; echo ~-')
 [ "$res" == "/etc
 /" ] || err $LINENO

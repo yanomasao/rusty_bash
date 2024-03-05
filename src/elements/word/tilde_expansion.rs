@@ -4,8 +4,6 @@
 use crate::ShellCore;
 use crate::elements::word::Word;
 use crate::elements::subword::SubwordType;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 
 pub fn eval(word: &mut Word, core: &mut ShellCore) {
     let length = match prefix_length(word) {
@@ -42,26 +40,8 @@ fn get_value(text: &str, core: &mut ShellCore) -> String {
         "" => "HOME",
         "+" => "PWD",
         "-" => "OLDPWD",
-        _ => return solve_home_dir(text),
+        _ => return "".to_string(),
     };
 
     core.get_param_ref(key).to_string()
-}
-
-fn solve_home_dir(user: &str) -> String {
-    let reader = match File::open("/etc/passwd") {
-        Ok(f) => BufReader::new(f),
-        _ => return String::new(),
-    };
-
-    for line in reader.lines() {
-        if let Ok(ref ln) = line {
-            let fields: Vec<&str> = ln.split(":").collect();
-            if fields.len() > 5 && user == fields[0] {
-                return fields[5].to_string();
-            }
-        }
-    }
-
-    String::new()
 }

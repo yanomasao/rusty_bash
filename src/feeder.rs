@@ -61,14 +61,10 @@ impl Feeder {
     fn read_line_stdin() -> Result<String, InputError> {
         let mut line = String::new();
 
-        let len = io::stdin()
-            .read_line(&mut line)
-            .expect("Failed to read line");
-
-        if len == 0 {
-            Err(InputError::Eof)
-        }else{
-            Ok(line)
+        match io::stdin().read_line(&mut line) {
+            Ok(0) => Err(InputError::Eof), 
+            Ok(_) => Ok(line),
+            Err(e) => panic!("sush: {}", &e),
         }
     }
 

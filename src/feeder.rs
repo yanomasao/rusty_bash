@@ -58,18 +58,24 @@ impl Feeder {
         self.remaining = self.backup.pop().expect("SUSHI INTERNAL ERROR (backup error)");
     }   
 
-    fn read_line_stdin() -> Result<String, InputError> {
+    fn read_line_stdin(core: &mut ShellCore) -> Result<String, InputError> {
         let mut line = String::new();
+        match io::stdin().read_line(&mut line) {
+            Ok(0)  => Err(InputError::Eof), 
+            Ok(_)  => Ok(line), 
+            Err(e) => {
+                eprintln!("sush: error reading input file: {}", &e);
+                core.set_param("?", "2");
+                core.exit()
+            },
+        }
 
-        let len = io::stdin()
-            .read_line(&mut line)
-            .expect("Failed to read line");
-
+        /*
         if len == 0 {
             Err(InputError::Eof)
         }else{
             Ok(line)
-        }
+        }*/
     }
 
     fn feed_additional_line_core(&mut self, core: &mut ShellCore) -> Result<(), InputError> {
@@ -81,7 +87,7 @@ impl Feeder {
             let len_prompt = term::prompt_additional();
             term::read_line_terminal(len_prompt, core)
         }else{
-            Self::read_line_stdin()
+            Self::read_line_stdin(core)
         };
 
         match line { 
@@ -114,7 +120,7 @@ impl Feeder {
             let len_prompt = term::prompt_normal(core);
             term::read_line_terminal(len_prompt, core)
         }else{ 
-            Self::read_line_stdin()
+            Self::read_line_stdin(core)
         };
 
         match line {

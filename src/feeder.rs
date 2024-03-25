@@ -69,13 +69,6 @@ impl Feeder {
                 core.exit()
             },
         }
-
-        /*
-        if len == 0 {
-            Err(InputError::Eof)
-        }else{
-            Ok(line)
-        }*/
     }
 
     fn feed_additional_line_core(&mut self, core: &mut ShellCore) -> Result<(), InputError> {

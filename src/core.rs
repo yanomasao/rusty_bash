@@ -58,11 +58,10 @@ impl ShellCore {
         core.set_initial_parameters();
         core.set_builtins();
 
-        if unistd::isatty(0)
-                   .expect("sush: isatty error") {
+        if unistd::isatty(0) == Ok(true) {
             core.flags += "i";
             core.tty_fd = fcntl::fcntl(2, fcntl::F_DUPFD_CLOEXEC(255))
-                .expect("sush(fatal): Can't allocate fd for tty FD");
+                  .expect("sush(fatal): Can't allocate fd for tty FD");
         }
 
         core

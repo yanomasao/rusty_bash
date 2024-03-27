@@ -30,13 +30,6 @@ pub struct ShellCore {
     tcwd: Option<path::PathBuf>, // the_current_working_directory
 }
 
-fn is_interactive() -> bool {
-    match unistd::isatty(0) {
-        Ok(result) => result,
-        Err(err) => panic!("{}", err),
-    }
-}
-
 fn ignore_signal(sig: Signal) {
     unsafe { signal::signal(sig, SigHandler::SigIgn) }
         .expect("sush(fatal): cannot ignore signal");
@@ -65,7 +58,8 @@ impl ShellCore {
         core.set_initial_parameters();
         core.set_builtins();
 
-        if is_interactive() {
+        if unistd::isatty(0)
+                   .expect("sush: isatty error") {
             core.flags += "i";
             core.tty_fd = fcntl::fcntl(2, fcntl::F_DUPFD_CLOEXEC(255))
                 .expect("sush(fatal): Can't allocate fd for tty FD");

@@ -6,7 +6,7 @@ use super::{Command, Pipe, Redirect};
 use crate::elements::command;
 use nix::unistd::Pid;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WhileCommand {
     pub text: String,
     pub while_script: Option<Script>,
@@ -31,7 +31,7 @@ impl Command for WhileCommand {
                 .expect("SUSH INTERNAL ERROR (no script)")
                 .exec(core);
 
-            if core.vars["?"] != "0" {
+            if core.get_param_ref("?") != "0" {
                 break;
             }
 
@@ -44,6 +44,7 @@ impl Command for WhileCommand {
     fn get_text(&self) -> String { self.text.clone() }
     fn get_redirects(&mut self) -> &mut Vec<Redirect> { &mut self.redirects }
     fn set_force_fork(&mut self) { self.force_fork = true; }
+    fn boxed_clone(&self) -> Box<dyn Command> {Box::new(self.clone())}
 }
 
 impl WhileCommand {

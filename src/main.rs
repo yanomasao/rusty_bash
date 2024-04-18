@@ -10,17 +10,19 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use crate::core::ShellCore;
 use crate::elements::script::Script;
-use crate::feeder::Feeder;
+use crate::feeder::{Feeder, InputError};
 use signal_hook::consts;
 use signal_hook::iterator::Signals;
 
 fn show_version() {
-    eprintln!("Sushi Shell 202305_5");
-    eprintln!("© 2023 Ryuichi Ueda");
-    eprintln!("License: BSD 3-Clause\n");
+    let s = "Sushi Shell SoftwareDesign version
+© 2023 Ryuichi Ueda
+License: BSD 3-Clause
 
-    eprintln!("This is open source software. You can redistirbute and use in source\nand binary forms with or without modification under the license.");
-    eprintln!("There is no warranty, to the extent permitted by law.");
+This is open source software. You can redistirbute and use in source
+and binary forms with or without modification under the license.
+There is no warranty, to the extent permitted by law.";
+    eprintln!("{}", s);
     process::exit(0);
 }
 
@@ -68,7 +70,7 @@ fn input_interrupt_check(feeder: &mut Feeder, core: &mut ShellCore) -> bool {
     }
 
     core.sigint.store(false, Relaxed); //core.input_interrupt = false;
-    core.vars.insert("?".to_string(), "130".to_string());
+    core.set_param("?", "130");
     feeder.consume(feeder.len());
     true
 }
@@ -78,15 +80,17 @@ fn main_loop(core: &mut ShellCore) {
     loop {
         core.jobtable_check_status();
         core.jobtable_print_status_change();
-        if ! feeder.feed_line(core) {
-            if core.has_flag('i') {
+
+        match feeder.feed_line(core) {
+            Ok(()) => {}, 
+            Err(InputError::Interrupt) => {
                 input_interrupt_check(&mut feeder, core);
                 continue;
-            }else{
-                break;
-            }   
+            },
+            _ => break,
         }
 
+        core.sigint.store(false, Relaxed);
         match Script::parse(&mut feeder, core){
             Some(mut s) => s.exec(core),
             None => {},

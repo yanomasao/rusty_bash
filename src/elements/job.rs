@@ -7,7 +7,7 @@ use crate::core::jobtable::JobEntry;
 use nix::unistd;
 use nix::unistd::{Pid, ForkResult};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Job {
     pub pipelines: Vec<Pipeline>,
     pub pipeline_ends: Vec<String>,
@@ -38,13 +38,16 @@ impl Job {
                 let pids = pipeline.exec(core, pgid);
                 core.wait_pipeline(pids);
             }
-            do_next = (&core.vars["?"] == "0") == (end == "&&");
+            do_next = (core.get_param_ref("?") == "0") == (end == "&&");
         }
     }
 
     fn exec_bg(&mut self, core: &mut ShellCore, pgid: Pid) {
-        let backup = core.tty_fd;
-        core.tty_fd = -1;
+        let backup = match core.tty_fd.as_ref() {
+            Some(fd) => Some(fd.try_clone().unwrap()),
+            _ => None,
+        };
+        core.tty_fd = None;
 
         let pids = if self.pipelines.len() == 1 {
             if self.pipelines[0].commands.len() == 1 {

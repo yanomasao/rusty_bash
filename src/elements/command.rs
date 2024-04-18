@@ -26,6 +26,12 @@ impl Debug for dyn Command {
     }
 }
 
+impl Clone for Box::<dyn Command> {
+    fn clone(&self) -> Box<dyn Command> {
+        self.boxed_clone()
+    }
+}
+
 pub trait Command {
     fn exec(&mut self, core: &mut ShellCore, pipe: &mut Pipe) -> Option<Pid>;
 
@@ -33,7 +39,7 @@ pub trait Command {
         match unsafe{unistd::fork()} {
             Ok(ForkResult::Child) => {
                 core.initialize_as_subshell(Pid::from_raw(0), pipe.pgid);
-                io::connect(pipe, self.get_redirects());
+                io::connect(pipe, self.get_redirects(), core);
                 self.run(core, true);
                 core.exit()
             },
@@ -47,10 +53,10 @@ pub trait Command {
     }
 
     fn nofork_exec(&mut self, core: &mut ShellCore) {
-        if self.get_redirects().iter_mut().all(|r| r.connect(true)){
+        if self.get_redirects().iter_mut().all(|r| r.connect(true, core)){
             self.run(core, false);
         }else{
-            core.vars.insert("?".to_string(), "1".to_string());
+            core.set_param("?", "1");
         }
         self.get_redirects().iter_mut().rev().for_each(|r| r.restore());
     }
@@ -59,6 +65,7 @@ pub trait Command {
     fn get_text(&self) -> String;
     fn get_redirects(&mut self) -> &mut Vec<Redirect>;
     fn set_force_fork(&mut self);
+    fn boxed_clone(&self) -> Box<dyn Command>;
 }
 
 pub fn eat_inner_script(feeder: &mut Feeder, core: &mut ShellCore,
@@ -66,10 +73,10 @@ pub fn eat_inner_script(feeder: &mut Feeder, core: &mut ShellCore,
    if ! feeder.starts_with(left) {
        return false;
     }
-    core.nest.push( (left.to_string(), right.iter().map(|e| e.to_string()).collect()) );
+    feeder.nest.push( (left.to_string(), right.iter().map(|e| e.to_string()).collect()) );
     feeder.consume(left.len());
     *ans = Script::parse(feeder, core);
-    core.nest.pop();
+    feeder.nest.pop();
     ! ans.is_none()
 }
 

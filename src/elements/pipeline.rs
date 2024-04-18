@@ -8,7 +8,7 @@ use super::Pipe;
 use nix::unistd::Pid;
 use std::sync::atomic::Ordering::Relaxed;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Pipeline {
     pub commands: Vec<Box<dyn Command>>,
     pub pipes: Vec<Pipe>,
@@ -18,7 +18,7 @@ pub struct Pipeline {
 impl Pipeline {
     pub fn exec(&mut self, core: &mut ShellCore, pgid: Pid) -> Vec<Option<Pid>> {
         if core.sigint.load(Relaxed) { //以下4行追加
-            core.vars.insert("?".to_string(), "130".to_string());
+            core.set_param("?", "130");
             return vec![];
         }
 
@@ -97,7 +97,7 @@ impl Pipeline {
                 if Self::eat_command(feeder, &mut ans, core) {
                     break; //コマンドがあれば73行目のloopを抜けてパイプを探す
                 }
-                if feeder.len() != 0 || ! feeder.feed_additional_line(core) { //追加の行の読み込み
+                if feeder.len() != 0 || ! feeder.feed_additional_line(core) {
                     return None;
                 }
             }

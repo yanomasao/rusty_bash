@@ -4,9 +4,11 @@
 use crate::{ShellCore, Feeder};
 use super::{Command, Pipe, Redirect};
 use crate::elements::command;
+use crate::elements::word::Word;
 use nix::unistd;
 use std::ffi::CString;
 use std::process;
+use std::sync::atomic::Ordering::Relaxed;
 
 use nix::unistd::Pid;
 use nix::errno::Errno;
@@ -18,9 +20,10 @@ fn reserved(w: &str) -> bool {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SimpleCommand {
     text: String,
+    words: Vec<Word>,
     args: Vec<String>,
     redirects: Vec<Redirect>,
     force_fork: bool,
@@ -28,6 +31,21 @@ pub struct SimpleCommand {
 
 impl Command for SimpleCommand {
     fn exec(&mut self, core: &mut ShellCore, pipe: &mut Pipe) -> Option<Pid> {
+        self.args.clear();
+        let mut words = self.words.to_vec();
+
+        for w in words.iter_mut() {
+            match w.eval(core) {
+                Some(ws) => self.args.extend(ws),
+                None => {
+                    if ! core.sigint.load(Relaxed) {
+                        core.set_param("?", "1");
+                    }
+                    return None;
+                },
+            }
+        }
+
         if self.args.len() == 0 {
             return None;
         }
@@ -58,12 +76,17 @@ impl Command for SimpleCommand {
     fn get_text(&self) -> String { self.text.clone() }
     fn get_redirects(&mut self) -> &mut Vec<Redirect> { &mut self.redirects }
     fn set_force_fork(&mut self) { self.force_fork = true; }
+    fn boxed_clone(&self) -> Box<dyn Command> {Box::new(self.clone())}
 }
 
 impl SimpleCommand {
     fn exec_external_command(args: &mut Vec<String>) -> ! {
         let cargs = Self::to_cargs(args);
         match unistd::execvp(&cargs[0], &cargs) {
+            Err(Errno::E2BIG) => {
+                println!("sush: {}: Arg list too long", &args[0]);
+                process::exit(126)
+            },
             Err(Errno::EACCES) => {
                 println!("sush: {}: Permission denied", &args[0]);
                 process::exit(126)
@@ -89,25 +112,24 @@ impl SimpleCommand {
     fn new() -> SimpleCommand {
         SimpleCommand {
             text: String::new(),
+            words: vec![],
             args: vec![],
             redirects: vec![],
             force_fork: false,
         }
     }
- 
+
     fn eat_word(feeder: &mut Feeder, ans: &mut SimpleCommand, core: &mut ShellCore) -> bool {
-        let arg_len = feeder.scanner_word(core);
-        if arg_len == 0 {
+        let w = match Word::parse(feeder, core) {
+            Some(w) => w,
+            _       => return false,
+        };
+
+        if ans.words.len() == 0 && reserved(&w.text) {
             return false;
         }
- 
-        let word = feeder.consume(arg_len);
-        if ans.args.len() == 0 && reserved(&word) {
-            return false;
-        }
- 
-        ans.text += &word.clone();
-        ans.args.push(word);
+        ans.text += &w.text;
+        ans.words.push(w);
         true
     }
 
@@ -122,7 +144,7 @@ impl SimpleCommand {
             }
         }
 
-        if ans.args.len() + ans.redirects.len() > 0 {
+        if ans.words.len() + ans.redirects.len() > 0 {
             feeder.pop_backup();
             Some(ans)
         }else{

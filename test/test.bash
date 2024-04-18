@@ -31,7 +31,7 @@ res=$($com <<< 'echo hoge;')
 res=$($com <<< 'cd /; pwd')
 [ "$res" = "/" ] || err $LINENO
 
-res=$($com <<< 'cd /tmp; mkdir hoge; ln -s hoge link; cd link; pwd -L; pwd -P')
+res=$($com <<< 'rm -f /tmp/link; cd /tmp; mkdir -p hoge; ln -s hoge link; cd link; pwd -L; pwd -P')
 [ "$res" = "/tmp/link
 /tmp/hoge" ] ||
 [ "$res" = "/tmp/link
@@ -113,6 +113,9 @@ res=$($com <<< '{ echo } ; }')
 [ "$res" = "}" ] || err $LINENO
 
 res=$($com <<< '{ echo a }')
+[ "$?" = 2 ] || err $LINENO
+
+res=$($com <<< 'echo (')
 [ "$?" = 2 ] || err $LINENO
 
 ### IRREGULAR COMMAND TEST ###
@@ -256,12 +259,12 @@ res=$($com <<< 'ls /etc/passwd aaaa &> /tmp/rusty_bash; cat /tmp/rusty_bash | wc
 # &> for non-fork redirects
 
 res=$($com <<< '
-	{ ls /etc/passwd aaaa ; } &> /tmp/rusty_bash 
+	{ ls /etc/passwd aaaa ; } &> /tmp/rusty_bash
 	cat /tmp/rusty_bash | wc -l | tr -dc 0-9')
 [ "$res" == "2" ] || err $LINENO
 
 res=$(LANG=C $com <<< '
-	{ ls /etc/passwd aaaa ; } &> /tmp/rusty_bash 
+	{ ls /etc/passwd aaaa ; } &> /tmp/rusty_bash
 	cat /tmp/rusty_bash | wc -l
 	#ちゃんと標準出力が原状復帰されているか調査
 	{ ls /etc/passwd ; }
@@ -285,6 +288,13 @@ res=$($com <<< '
 a
 /etc
 /etc" ] || err $LINENO
+
+# with expansion
+
+res=$($com <<< 'echo a > {a,b}' 2>&1)
+[ "$?" == "1" ] || err $LINENO
+[ "$res" == "sush: {a,b}: ambiguous redirect" ] || err $LINENO
+
 
 ### JOB PARSE TEST ###
 
@@ -328,6 +338,45 @@ res=$($com <<< 'echo a \
 [ "$res" == "a
 b" ] || err $LINENO
 
+# double quotation
+
+res=$($com <<< 'echo "*"')
+[ "$res" == "*" ] || err $LINENO
+
+res=$($com <<< 'echo "{a,{b},c}"')
+[ "$res" == "{a,{b},c}" ] || err $LINENO
+
+export RUSTY_BASH_A='a
+b'
+res=$($com <<< 'echo "$RUSTY_BASH_A"')
+[ "$res" == "a
+b" ] || err $LINENO
+
+res=$($com <<< 'echo "$BASH{PID,_SUBSHELL}"')
+[ "$res" == "{PID,_SUBSHELL}" ] || err $LINENO
+
+res=$($com <<< 'echo "\$HOME"')
+[ "$res" == '$HOME' ] || err $LINENO
+
+res=$($com <<< 'echo "\a"')
+[ "$res" == '\a' ] || err $LINENO
+
+res=$($com <<< 'echo "\\"')
+[ "$res" == '\' ] || err $LINENO
+
+res=$($com <<< 'echo "a   b"')
+[ "$res" == 'a   b' ] || err $LINENO
+
+res=$($com <<< 'echo "a
+b
+c"')
+[ "$res" == 'a
+b
+c' ] || err $LINENO
+
+res=$($com <<< 'echo "')
+[ "$?" == 2 ] || err $LINENO
+
 ### WHILE TEST ###
 
 res=$($com <<< 'touch /tmp/rusty_bash ; while [ -f /tmp/rusty_bash ] ; do echo wait ; rm /tmp/rusty_bash ; done')
@@ -336,7 +385,232 @@ res=$($com <<< 'touch /tmp/rusty_bash ; while [ -f /tmp/rusty_bash ] ; do echo w
 res=$($com <<< 'rm -f /tmp/rusty_bash ; while [ -f /tmp/rusty_bash ] ; do echo wait ; rm /tmp/rusty_bash ; done')
 [ "$res" == "" ] || err $LINENO
 
-### IF TEST ###
+### ARG TEST ###
+
+# brace
+
+res=$($com <<< 'echo {a,b}c')
+[ "$res" == "ac bc" ] || err $LINENO
+
+res=$($com <<< 'echo c{a,b}')
+[ "$res" == "ca cb" ] || err $LINENO
+
+res=$($com <<< 'echo {{a},b}')
+[ "$res" == "{a} b" ] || err $LINENO
+
+res=$($com <<< 'echo {a,{b},c}')
+[ "$res" == "a {b} c" ] || err $LINENO
+
+res=$($com <<< 'echo {a,b,c{d,e}f,g{h,i{j,k}}}')
+[ "$res" == "a b cdf cef gh gij gik" ] || err $LINENO
+
+res=$($com <<< 'echo {a,b,c{d,e}f,g{h,i{j,k}}')
+[ "$res" == "{a,b,cdf,gh {a,b,cdf,gij {a,b,cdf,gik {a,b,cef,gh {a,b,cef,gij {a,b,cef,gik" ] || err $LINENO
+
+res=$($com <<< 'echo c{a,b')
+[ "$res" == "c{a,b" ] || err $LINENO
+
+res=$($com <<< 'echo c{a,b,')
+[ "$res" == "c{a,b," ] || err $LINENO
+
+res=$($com <<< 'echo {{a,あいうえお@},{c,d},')
+[ "$res" == "{a,c, {a,d, {あいうえお@,c, {あいうえお@,d," ] || err $LINENO
+
+res=$($com <<< 'echo {{a,b},{c,d')
+[ "$res" == "{a,{c,d {b,{c,d" ] || err $LINENO
+
+res=$($com <<< 'echo {{a,b,{c,')
+[ "$res" == "{{a,b,{c," ] || err $LINENO
+
+res=$($com <<< 'echo {a}')
+[ "$res" == "{a}" ] || err $LINENO
+
+res=$($com <<< 'echo {a,}')
+[ "$res" == "a" ] || err $LINENO
+
+res=$($com <<< 'echo {a,b,}')
+[ "$res" == "a b" ] || err $LINENO
+
+res=$($com <<< 'echo {a,b,}c')
+[ "$res" == "ac bc c" ] || err $LINENO
+
+res=$($com <<< 'echo {}')
+[ "$res" == "{}" ] || err $LINENO
+
+res=$($com <<< 'echo {,}')
+[ "$res" == "" ] || err $LINENO
+
+res=$($com <<< 'echo {,,}')
+[ "$res" == "" ] || err $LINENO
+
+res=$($com <<< 'echo a{,,}b')
+[ "$res" == "ab ab ab" ] || err $LINENO
+
+res=$($com <<< 'echo {')
+[ "$res" == "{" ] || err $LINENO
+
+res=$($com <<< 'echo }')
+[ "$res" == "}" ] || err $LINENO
+
+res=$($com <<< 'echo {a,}{b,}')
+[ "$res" == "ab a b" ] || err $LINENO
+
+res=$($com <<< 'echo {d}d{},dba}')
+[ "$res" == "d}d{} dba" ] || err $LINENO
+#[ "$res" == "" ] || err $LINENO
+
+res=$($com <<< 'echo {}a,b}')
+[ "$res" == "{}a,b}" ] || err $LINENO
+
+res=$($com <<< 'echo c{}a,b}')
+[ "$res" == "c}a cb" ] || err $LINENO
+
+res=$($com <<< 'echo {,}{}a,b}')
+[ "$res" == "{}a,b} {}a,b}" ] || err $LINENO
+
+res=$($com <<< 'echo a{}},b}')
+[ "$res" == "a}} ab" ] || err $LINENO
+
+res=$($com <<< 'echo $${a,b} | sed -E s/[0-9]+/num/g' )
+[ "$res" == "num{a,b}" ] || err $LINENO
+
+res=$($com <<< 'echo $${a,{b,c},d} | sed -E s/[0-9]+/num/g')
+[ "$res" == "num{a,{b,c},d}" ] || err $LINENO
+
+res=$($com <<< 'echo あ{a,b}{},c}')
+[ "$res" == "あa{},c} あb{},c}" ] || err $LINENO
+
+res=$($com <<< 'echo あ{a,b}d{},c}')
+[ "$res" == "あad} あadc あbd} あbdc" ] || err $LINENO
+
+# escaping
+
+res=$($com <<< "echo a\ \ \ a")
+[ "$res" == "a   a" ] || err $LINENO
+
+res=$($com <<< 'echo \(')
+[ "$res" == "(" ] || err $LINENO
+
+# quotation
+
+res=$($com <<< "echo 'abc'")
+[ "$res" == "abc" ] || err $LINENO
+
+res=$($com <<< "echo 'abあいうc'")
+[ "$res" == "abあいうc" ] || err $LINENO
+
+res=$($com <<< "echo 123'abc'")
+[ "$res" == "123abc" ] || err $LINENO
+
+res=$($com <<< "echo 123'abc'def")
+[ "$res" == "123abcdef" ] || err $LINENO
+
+# parameter expansion
+
+res=$($com <<< 'echo $')
+[ "$res" == "$" ] || err $LINENO
+
+res=$($com <<< 'echo $?')
+[ "$res" == "0" ] || err $LINENO
+
+res=$($com <<< 'echo ${?}')
+[ "$res" == "0" ] || err $LINENO
+
+res=$($com <<< 'ls aaaaaaaa ; echo $?')
+[ "$res" != "0" ] || err $LINENO
+
+res=$($com <<< 'echo $BASH{PID,_SUBSHELL} | sed -E s@[0-9]+@num@')
+[ "$res" == "num 0" ] || err $LINENO
+
+res=$($com <<< 'echo ${BASHPID} ${BASH_SUBSHELL} | sed -E s@[0-9]+@num@')
+[ "$res" == "num 0" ] || err $LINENO
+
+res=$($com <<< 'echo ${ ')
+[ "$?" == "2" ] || err $LINENO
+[ "$res" == "" ] || err $LINENO
+
+res=$($com <<< 'echo ${ A}')
+[ "$?" == "1" ] || err $LINENO
+[ "$res" == "" ] || err $LINENO
+
+res=$($com <<< 'echo ${A }')
+[ "$?" == "1" ] || err $LINENO
+[ "$res" == "" ] || err $LINENO
+
+res=$($com <<< 'echo ${_A32523j2}')
+[ "$?" == "0" ] || err $LINENO
+[ "$res" == "" ] || err $LINENO
+
+res=$($com <<< 'echo ${_A32*523j2}')
+[ "$?" == "1" ] || err $LINENO
+[ "$res" == "" ] || err $LINENO
+
+# tilde
+
+res=$($com <<< 'echo ~ | grep -q /')
+[ "$?" == "0" ] || err $LINENO
+
+res=$($com <<< 'echo ~root')
+[ "$res" == "/root" -o "$res" == "/var/root" ] || err $LINENO
+
+res=$($com <<< 'cd /; cd /etc; echo ~+; echo ~-')
+[ "$res" == "/etc
+/" ] || err $LINENO
+
+# wildcard
+
+res=$($com <<< 'echo /bin/?' | grep -F '/bin/[')
+[ "$?" == "0" ] || err $LINENO
+
+res=$($com <<< 'echo /*' | grep '/etc')
+[ "$?" == 0 ] || err $LINENO
+
+res=$($com <<< 'echo ~+/*' | grep '*')
+[ "$?" == 1 ] || err $LINENO
+
+res=$($com <<< 'echo ~/*' | grep -F '/.')
+[ "$?" == 1 ] || err $LINENO
+
+res=$($com <<< 'echo ~/.*' | grep -F '/.')
+[ "$?" == 0 ] || err $LINENO
+
+res=$($com <<< 'echo /etc*/' | grep -F '/etc/')
+[ "$?" == 0 ] || err $LINENO
+
+res=$($com <<< 'echo .*' | grep -F './.')
+[ "$?" == 1 ] || err $LINENO
+
+# split
+
+export RUSTY_BASH_A='a
+b'
+res=$($com <<< 'echo $RUSTY_BASH_A')
+[ "$res" == "a b" ] || err $LINENO
+
+export RUSTY_BASH_A='a
+b'
+res=$($com <<< 'echo $RUSTY_BASH_A$RUSTY_BASH_A')
+[ "$res" == "a ba b" ] || err $LINENO
+
+export RUSTY_BASH_A='a
+b'
+res=$($com <<< 'echo ${RUSTY_BASH_A}c')
+[ "$res" == "a bc" ] || err $LINENO
+
+export RUSTY_BASH_A='a
+b
+'
+res=$($com <<< 'echo ${RUSTY_BASH_A}c')
+[ "$res" == "a b c" ] || err $LINENO
+
+res=$($com <<< 'mkdir tmp; cd tmp; echo .* | grep -F '. ..'; cd ..; rmdir tmp')
+[ "$res" == '. ..' ] || err $LINENO
+
+res=$($com <<< 'mkdir tmp; cd tmp; echo .*/ | grep -F '. ..'; cd ..; rmdir tmp')
+[ "$res" == '../ ./' ] || err $LINENO
+
+### WHILE TEST ###
+
 res=$($com <<< 'touch /tmp/rusty_bash ; while [ -f /tmp/rusty_bash ] ; do echo wait ; rm /tmp/rusty_bash ; done > /tmp/rusty_bash1'; cat /tmp/rusty_bash1 ; cat /tmp/rusty_bash1 )
 [ "$res" == "wait
 wait" ] || err $LINENO

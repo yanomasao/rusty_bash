@@ -10,7 +10,7 @@ enum Status{
     NormalEnd,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Script {
     pub jobs: Vec<Job>,
     pub job_ends: Vec<String>,
@@ -52,8 +52,8 @@ impl Script {
         len != 0
     }
 
-    fn check_nest(feeder: &mut Feeder, core: &mut ShellCore, jobnum: usize) -> Status {
-        let nest = core.nest.last().expect("SUSHI INTERNAL ERROR (empty nest)");
+    fn check_nest(feeder: &mut Feeder, jobnum: usize) -> Status {
+        let nest = feeder.nest.last().expect("SUSHI INTERNAL ERROR (empty nest)");
 
         match ( nest.1.iter().find(|e| feeder.starts_with(e)), jobnum ) {
             ( Some(end), 0 ) => return Status::UnexpectedSymbol(end.to_string()),
@@ -61,7 +61,7 @@ impl Script {
             ( None, _)       => {}, 
         }
 
-        let ng_ends = vec![")", "}", "then", "else", "if", "fi", "elif", "do", "done", "while", "||", "&&", "|", "&"];
+        let ng_ends = vec!["(", ")", "}", "then", "else", "if", "fi", "elif", "do", "done", "while", "||", "&&", "|", "&"];
         match ( ng_ends.iter().find(|e| feeder.starts_with(e)), nest.1.len() ) {
             (Some(end), _) => return Status::UnexpectedSymbol(end.to_string()),
             (None, 0)      => return Status::NormalEnd,
@@ -76,12 +76,13 @@ impl Script {
             while Self::eat_job(feeder, core, &mut ans) 
                && Self::eat_job_end(feeder, &mut ans) {}
     
-            match Self::check_nest(feeder, core, ans.jobs.len()){
+            match Self::check_nest(feeder, ans.jobs.len()){
                 Status::NormalEnd => {
                     return Some(ans)
                 },
                 Status::UnexpectedSymbol(s) => {
                     eprintln!("Unexpected token: {}", s);
+                    core.set_param("?", "2");
                     break;
                 },
                 Status::NeedMoreLine => {
@@ -92,7 +93,6 @@ impl Script {
             }
         }
 
-        core.vars.insert("?".to_string(), "2".to_string());
         feeder.consume(feeder.len());
         return None;
     }

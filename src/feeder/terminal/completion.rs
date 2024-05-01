@@ -31,10 +31,8 @@ fn expand(path: &str, executable_only: bool, search_dir: bool) -> Vec<String> {
 fn to_str(path :&Result<PathBuf, GlobError>, executable_only: bool, search_dir: bool) -> String {
     match path {
         Ok(p) => {
-            if executable_only && ! p.executable() && ! p.is_dir() {
-                return "".to_string();
-            }
-            if ! search_dir && p.is_dir() {
+            if ( executable_only && ! p.executable() && ! p.is_dir() )
+            || ( ! search_dir && p.is_dir() ) {
                 return "".to_string();
             }
 
@@ -87,18 +85,16 @@ impl Terminal {
 
         let mut command_pos = 0;
         for w in &words {
-            if w.find("=") != None {
-                command_pos += 1;
-            }else{
-                break;
+            match w.find("=") {
+                None => break,
+                _    => command_pos +=1,
             }
         }
-        let search_executable = command_pos == words.len()-1;
+        let search_command = command_pos == words.len()-1;
 
-        if search_executable && ! last.starts_with(".") && ! last.starts_with("/"){
-            self.command_completion(&last, core);
-        }else{
-            self.file_completion(&last, double_tab, search_executable);
+        match search_command && ! last.starts_with(".") && ! last.starts_with("/"){
+            true  => self.command_completion(&last, core),
+            false => self.file_completion(&last, core, double_tab, search_command),
         }
     }
 
@@ -106,8 +102,7 @@ impl Terminal {
         let mut comlist = HashSet::new();
         for path in core.get_param_ref("PATH").to_string().split(":") {
             for file in expand(&(path.to_string() + "/*"), true, false) {
-                let tmp = file.clone();
-                let command = tmp.split("/").last().map(|s| s.to_string()).unwrap();
+                let command = file.split("/").last().map(|s| s.to_string()).unwrap();
                 if command.starts_with(target) {
                     comlist.insert(command.clone());
                 }
@@ -127,12 +122,26 @@ impl Terminal {
         }
     }
 
-    pub fn file_completion(&mut self, target: &String, double_tab: bool, search_executable: bool) {
-        let paths = expand(&(target.to_string() + "*"), search_executable, true);
+    pub fn file_completion(&mut self, target: &String, core: &mut ShellCore,
+                           double_tab: bool, search_executable: bool) {
+        let mut wildcard = target.to_string() + "*";
+
+        let mut target_tilde = target.to_string();
+        if target.starts_with("~/") {
+            self.tilde_prefix = "~/".to_string();
+            self.tilde_path = core.get_param_ref("HOME").to_string() + "/";
+            wildcard = wildcard.replacen(&self.tilde_prefix, &self.tilde_path, 1);    
+            target_tilde = target_tilde.replacen(&self.tilde_prefix, &self.tilde_path, 1);
+        }else{
+            self.tilde_prefix = String::new();
+            self.tilde_path = String::new();
+        }
+
+        let paths = expand(&wildcard, search_executable, true);
         match paths.len() {
             0 => self.cloop(),
             1 => self.replace_input(&paths[0], &target),
-            _ => self.file_completion_multicands(&target.to_string(), &paths, double_tab),
+            _ => self.file_completion_multicands(&target_tilde, &paths, double_tab),
         }
     }
 
@@ -169,13 +178,13 @@ impl Terminal {
         self.rewrite(true);
     }
 
-    pub fn file_completion_multicands(&mut self, dir: &String, paths: &Vec<String>, double_tab: bool) {
+    pub fn file_completion_multicands(&mut self, dir: &String,
+                                      paths: &Vec<String>, double_tab: bool) {
         let common = common_string(&paths);
         if common.len() == dir.len() {
-            if double_tab {
-                self.show_path_candidates(&dir.to_string(), &paths);
-            }else{
-                self.cloop();
+            match double_tab {
+                true => self.show_path_candidates(&dir.to_string(), &paths),
+                false => self.cloop(),
             }
             return;
         }
@@ -184,9 +193,14 @@ impl Terminal {
 
     pub fn show_path_candidates(&mut self, dir: &String, paths: &Vec<String>) {
         let ps = if dir.chars().last() == Some('/') {
-            paths.iter().map(|p| p.replacen(dir, "", 1)).collect()
+            paths.iter()
+                 .map(|p| p.replacen(dir, "", 1)
+                 .replacen(&self.tilde_path, &self.tilde_prefix, 1))
+                 .collect()
         }else{
-            paths.to_vec()
+            paths.iter()
+                 .map(|p| p.replacen(&self.tilde_path, &self.tilde_prefix, 1))
+                 .collect()
         };
 
         self.show_list(&ps);
@@ -201,6 +215,8 @@ impl Terminal {
             path_chars.insert(0, '/');
             path_chars.insert(0, '.');
         }
+        
+        path_chars = path_chars.replacen(&self.tilde_path, &self.tilde_prefix, 1);
 
         self.chars.drain(len - last_char_num..);
         self.chars.extend(path_chars.chars());

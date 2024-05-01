@@ -18,13 +18,13 @@ A clone of Bash, which is developed as a hobby of our group and for monthly arti
 ## Quick Start
 
 ```bash
-$ git clone https://github.com/shellgei/rusty_bash.git
-$ cd rusty_bash
-$ cargo build
-...
-🍣 echo hello
-hello
-🍣 exit
+ueda@uedaP1g6:~$ git clone https://github.com/shellgei/rusty_bash.git
+ueda@uedaP1g6:~$ cd rusty_bash
+ueda@uedaP1g6:~$ cargo run
+   Compiling sush v2025.6.9 (/home/ueda/GIT/rusty_bash)
+    Finished dev [unoptimized + debuginfo] target(s) in 2.33s
+     Running `target/debug/sush`
+ueda@uedaP1g6:~🍣 main🌵
 ```
 
 ## For Contributors 
@@ -32,8 +32,6 @@ hello
 Since the main branch must synchronize the articles, further developments are reflected in the following branches. We prepared dev-* branches for adding your codes with pull requests.
 * [dev-builtins](https://github.com/shellgei/rusty_bash/tree/dev-builtins): for builtin commands 
 * [dev-signal](https://github.com/shellgei/rusty_bash/tree/dev-signal): for development on signal
-* [dev-compounds](https://github.com/shellgei/rusty_bash/tree/dev-compounds): for development on compoundss
-* [dev-args](https://github.com/shellgei/rusty_bash/tree/dev-args): for development on arguments
 * [dev-test](https://github.com/shellgei/rusty_bash/tree/dev-test): for development of a nice test system and test cases (we need more sophisticated test)
 * [dev-others](https://github.com/shellgei/rusty_bash/tree/dev-others): for development of other features
 
@@ -45,6 +43,12 @@ These dev-* branches will be merged to the main branch depending on the situatio
 * :construction: :partially available (or having known bugs) 
 * :no_good: : not implemented
 
+### simple commands
+
+|features | status |features | status |features | status |
+|-------------------|----|-------------------|----|-------------------|----|
+| command | :heavy_check_mark: | substitutions | :heavy_check_mark: | function definition | :heavy_check_mark: |
+
 
 ### compound commands
 
@@ -54,14 +58,22 @@ These dev-* branches will be merged to the main branch depending on the situatio
 | {} | :heavy_check_mark: | case | :no_good: | until | :no_good: | select | :no_good: | 
 | for | :no_good: |
 
-
 ### control operator
 
 |features | status |features | status |features | status |
 |-------------------|----|-------------------|----|-------------------|----|
 | \|\| | :heavy_check_mark: | && | :heavy_check_mark: | ; | :heavy_check_mark: |
 | ;; | :heavy_check_mark: | \| | :heavy_check_mark: | & | :heavy_check_mark: |
-| \|& | :heavy_check_mark: | 
+| \|& | :heavy_check_mark: |
+
+### expansion
+
+|features | status |features | status |features | status |
+|-------------------|----|-------------------|----|-------------------|----|
+| brace `{a,b}` | :heavy_check_mark: | brace `{1..10}` | :no_good: | tilde | :heavy_check_mark: |
+| parameter/variable `$A ${A}` | :heavy_check_mark: | parameter/variable  (others) | :no_good: | command substitution | :heavy_check_mark: |
+| arithmetic | :no_good: | word splitting | :heavy_check_mark: | path name | :heavy_check_mark: |
+
 
 ### builtin commands
 
@@ -87,6 +99,12 @@ These dev-* branches will be merged to the main branch depending on the situatio
 | type | :no_good: | typeset | :no_good: | ulimit | :no_good: |
 | umask | :no_good: | unalias | :no_good: | unset | :no_good: |
 | wait | :no_good: | export | :no_good: | false | :heavy_check_mark: |
+
+### beyond Bash
+
+|features | status |
+|-------------------|----|
+| branch display in prompt | :heavy_check_mark: |
 
 ## Thanks to
 

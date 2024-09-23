@@ -1,0 +1,13 @@
+services:
+    rust:
+        container_name: rusty_bash
+        # build:
+        #     context: .
+        #     dockerfile: Dockerfile
+        image: my-rust:1.81.0-bookworm
+
+        # tty: true
+        # environment:
+        #     - TZ=Asia/Tokyo
+        # volumes:
+        #     - .:/app

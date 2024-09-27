@@ -3,9 +3,9 @@
 
 mod core;
 mod elem_command;
+mod feeder;
 mod term;
 mod utils;
-mod feeder;
 
 use std::{env, process};
 
@@ -30,8 +30,7 @@ fn main() {
     }
 
     /* Ignore Ctrl+C (Childlen will receive instead.) */
-    ctrlc::set_handler(move || { })
-    .expect("Unable to set the Ctrl+C handler.");
+    ctrlc::set_handler(move || {}).expect("Unable to set the Ctrl+C handler.");
 
     let mut core = ShellCore::new();
     main_loop(&mut core);
@@ -41,10 +40,9 @@ fn main_loop(core: &mut ShellCore) {
     let mut feeder = Feeder::new();
     loop {
         if feeder.feed_line(core) {
-            if let Some(mut c) = Command::parse(&mut feeder, core){
-                c.exec(core);
-            }else{
-                process::exit(1);
+            match Command::parse(&mut feeder, core) {
+                Some(mut c) => c.exec(core),
+                None => process::exit(1),
             }
         }
     }

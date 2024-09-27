@@ -1,8 +1,10 @@
 //SPDX-FileCopyrightText: 2022 Ryuichi Ueda ryuichiueda@gmail.com
 //SPDX-License-Identifier: BSD-3-Clause
 
+use nix::unistd::execvp;
+
 use crate::{Feeder, ShellCore};
-use std::process;
+use std::{ffi::CString, process};
 
 pub struct Command {
     pub text: String,
@@ -16,10 +18,13 @@ impl Command {
 
         let mut words = vec![];
         for w in self.text.trim_end().split(' ') {
-            words.push(w);
+            words.push(CString::new(w.to_string()).unwrap());
         }
 
         println!("{:?}", words);
+        if 0 < words.len() {
+            println!("{:?}", execvp(&words[0], &words));
+        }
     }
 
     pub fn parse(feeder: &mut Feeder, _core: &mut ShellCore) -> Option<Command> {

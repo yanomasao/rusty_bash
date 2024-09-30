@@ -10,39 +10,53 @@ use crate::{Feeder, ShellCore};
 use std::{ffi::CString, process};
 
 pub struct Command {
-    pub text: String,
+    _text: String,
     args: Vec<String>,
     cargs: Vec<CString>,
 }
 
 impl Command {
     pub fn exec(&mut self, core: &mut ShellCore) {
-        if self.text == "exit\n" {
-            process::exit(0);
+        if self.args[0] == "exit" {
+            eprintln!("exit");
+            if self.args.len() > 1 {
+                // process::exit(self.args[1].parse::<i32>().unwrap());
+                core.vars.insert("?".to_string(), self.args[1].clone());
+            }
+            // process::exit(0);
+            let exit_status = match core.vars["?"].parse::<i32>() {
+                Ok(n) => {
+                    if 0 <= n && n <= 255 {
+                        n
+                    } else {
+                        n % 256
+                    }
+                }
+                Err(_) => {
+                    eprintln!("sush: exit: {}: numeric argument required", core.vars["?"]);
+                    2
+                }
+            };
+            process::exit(exit_status);
         }
 
         // println!("{:?}", execvp(&self.cargs[0], &self.cargs));
         match unsafe { unistd::fork() } {
-            Ok(ForkResult::Child) => {
-                // let err = unistd::execvp(&self.cargs[0], &self.cargs);
-                // println!("Failed to execute. {:?}", err);
-                // process::exit(127);
-                match unistd::execvp(&self.cargs[0], &self.cargs) {
-                    Err(Errno::EACCES) => {
-                        println!("sush: {}: Permission denied", &self.args[0]);
-                        process::exit(126);
-                    }
-                    Err(Errno::ENOENT) => {
-                        println!("{}: command not found", &self.args[0]);
-                        process::exit(127);
-                    }
-                    Err(err) => {
-                        println!("Failed to execute. {:?}", err);
-                        process::exit(127);
-                    }
-                    _ => (),
+            Ok(ForkResult::Child) => match unistd::execvp(&self.cargs[0], &self.cargs) {
+                Err(Errno::EACCES) => {
+                    println!("sush: {}: Permission denied", &self.args[0]);
+                    process::exit(126);
                 }
-            }
+                Err(Errno::ENOENT) => {
+                    println!("{}: command not found", &self.args[0]);
+                    process::exit(127);
+                }
+                Err(err) => {
+                    println!("Failed to execute. {:?}", err);
+                    process::exit(127);
+                }
+                _ => (),
+            },
             Ok(ForkResult::Parent { child }) => {
                 eprintln!("PID{}の親です", child);
                 core.wait_process(child);
@@ -61,7 +75,7 @@ impl Command {
 
         if !args.is_empty() {
             Some(Command {
-                text: line,
+                _text: line,
                 args,
                 cargs,
             })

@@ -13,7 +13,7 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn exec(&mut self, _core: &mut ShellCore) {
+    pub fn exec(&mut self, core: &mut ShellCore) {
         if self.text == "exit\n" {
             process::exit(0);
         }
@@ -27,6 +27,7 @@ impl Command {
             }
             Ok(ForkResult::Parent { child }) => {
                 eprintln!("PID{}の親です", child);
+                core.wait_process(child);
             }
             Err(err) => panic!("Failed to fork. {:?}", err),
         }

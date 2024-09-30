@@ -1,7 +1,10 @@
 //SPDX-FileCopyrightText: 2022 Ryuichi Ueda ryuichiueda@gmail.com
 //SPDX-License-Identifier: BSD-3-Clause
 
-use nix::unistd::{self, execvp, ForkResult};
+use nix::{
+    errno::Errno,
+    unistd::{self, execvp, ForkResult},
+};
 
 use crate::{Feeder, ShellCore};
 use std::{ffi::CString, process};
@@ -21,9 +24,24 @@ impl Command {
         // println!("{:?}", execvp(&self.cargs[0], &self.cargs));
         match unsafe { unistd::fork() } {
             Ok(ForkResult::Child) => {
-                let err = unistd::execvp(&self.cargs[0], &self.cargs);
-                println!("Failed to execute. {:?}", err);
-                process::exit(127);
+                // let err = unistd::execvp(&self.cargs[0], &self.cargs);
+                // println!("Failed to execute. {:?}", err);
+                // process::exit(127);
+                match unistd::execvp(&self.cargs[0], &self.cargs) {
+                    Err(Errno::EACCES) => {
+                        println!("sush: {}: Permission denied", &self.args[0]);
+                        process::exit(126);
+                    }
+                    Err(Errno::ENOENT) => {
+                        println!("{}: command not found", &self.args[0]);
+                        process::exit(127);
+                    }
+                    Err(err) => {
+                        println!("Failed to execute. {:?}", err);
+                        process::exit(127);
+                    }
+                    _ => (),
+                }
             }
             Ok(ForkResult::Parent { child }) => {
                 eprintln!("PID{}の親です", child);

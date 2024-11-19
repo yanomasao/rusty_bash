@@ -10,34 +10,15 @@ use crate::{Feeder, ShellCore};
 use std::{ffi::CString, process};
 
 pub struct Command {
-    _text: String,
+    pub text: String,
     args: Vec<String>,
     cargs: Vec<CString>,
 }
 
 impl Command {
     pub fn exec(&mut self, core: &mut ShellCore) {
-        if self.args[0] == "exit" {
-            eprintln!("exit");
-            if self.args.len() > 1 {
-                // process::exit(self.args[1].parse::<i32>().unwrap());
-                core.vars.insert("?".to_string(), self.args[1].clone());
-            }
-            // process::exit(0);
-            let exit_status = match core.vars["?"].parse::<i32>() {
-                Ok(n) => {
-                    if 0 <= n && n <= 255 {
-                        n
-                    } else {
-                        n % 256
-                    }
-                }
-                Err(_) => {
-                    eprintln!("sush: exit: {}: numeric argument required", core.vars["?"]);
-                    2
-                }
-            };
-            process::exit(exit_status);
+        if core.run_builtin(&mut self.args) {
+            return;
         }
 
         // println!("{:?}", execvp(&self.cargs[0], &self.cargs));
@@ -58,7 +39,7 @@ impl Command {
                 _ => (),
             },
             Ok(ForkResult::Parent { child }) => {
-                eprintln!("PID{}の親です", child);
+                // eprintln!("PID{}の親です", child);
                 core.wait_process(child);
             }
             Err(err) => panic!("Failed to fork. {:?}", err),
@@ -75,7 +56,7 @@ impl Command {
 
         if !args.is_empty() {
             Some(Command {
-                _text: line,
+                text: line,
                 args,
                 cargs,
             })

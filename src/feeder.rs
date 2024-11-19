@@ -1,9 +1,10 @@
 //SPDX-FileCopyrightText: 2022 Ryuichi Ueda ryuichiueda@gmail.com
 //SPDX-License-Identifier: BSD-3-Clause
 
-use crate::ShellCore;
-use crate::term;
+mod term;
 
+use crate::ShellCore;
+// use crate::term;
 
 #[derive(Clone)]
 pub struct Feeder {
@@ -29,7 +30,7 @@ impl Feeder {
         let len_prompt = term::prompt_normal(core);
         if let Some(ln) = term::read_line_terminal(len_prompt, core) {
             line = ln
-        }else{
+        } else {
             return false;
         };
 
@@ -51,7 +52,7 @@ impl Feeder {
             self.pos_in_line = 0;
             */
             self.remaining = line;
-        }else{
+        } else {
             self.remaining += &line;
         };
     }
@@ -63,6 +64,4 @@ impl Feeder {
     pub fn len_as_chars(&self) -> usize {
         self.remaining.chars().count()
     }
-
 }
-

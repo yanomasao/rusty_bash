@@ -3,14 +3,14 @@
 
 mod core;
 mod elem_command;
+mod elements;
 mod feeder;
-mod term;
 mod utils;
 
 use std::{env, process};
 
 use crate::core::ShellCore;
-use crate::elem_command::Command;
+use crate::elements::script::Script;
 use crate::feeder::Feeder;
 
 fn show_version() {
@@ -40,7 +40,7 @@ fn main_loop(core: &mut ShellCore) {
     let mut feeder = Feeder::new();
     loop {
         if feeder.feed_line(core) {
-            match Command::parse(&mut feeder, core) {
+            match Script::parse(&mut feeder, core) {
                 Some(mut c) => c.exec(core),
                 None => process::exit(1),
             }
